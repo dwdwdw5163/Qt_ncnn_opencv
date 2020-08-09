@@ -2,5 +2,4 @@ build
 cmake-build-debug
 .DS_Store
 .idea
-3rd_party/ncnn/*
-3rd_party/ncnn/
+
