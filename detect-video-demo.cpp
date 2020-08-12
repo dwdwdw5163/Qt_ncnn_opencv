@@ -156,7 +156,7 @@ int main(int argc, char** argv)
         string fps = "FPS: " + to_string(1000 / timer.getTimeMilli());
         cv::putText(result_image, fps, cv::Point(20, 20), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 2);
         cv::imshow("img", result_image);
-        cv::waitKey(2);
+        cv::waitKey(1);
         out_video.write(result_image);
     }
     out_video.release();
