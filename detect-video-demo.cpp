@@ -92,8 +92,8 @@ int main(int argc, char** argv)
         fprintf(stderr, "Can not alloc buffer.\n");
         return -1;
     }
-    int det_w = 320;
-    int det_h = 240;
+    int det_w = 160;
+    int det_h = 120;
     float landmarks[num_landmarks];
     Mat det_input;
     TickMeter cvtm;
@@ -134,7 +134,7 @@ int main(int argc, char** argv)
             //show the score of the face. Its range is [0-100]
             char sScore[256];
             snprintf(sScore, 256, "%d", confidence);
-            if(confidence > 80){
+            if(confidence > 50){
                 cv::putText(result_image, sScore, cv::Point(x, y-3), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 0), 1);
                 //draw face rectangle
                 if(x + w >= ori_w) w = ori_w - x;
