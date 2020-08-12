@@ -4,8 +4,8 @@ project (pfld_ncnn)
 
 add_executable(detect-image-demo detect-image-demo.cpp)
 add_executable(detect-video-demo detect-video-demo.cpp)
-
-find_package(OpenCV REQUIRED )
+set(OpenCV_DIR /usr/local/lib/cmake/opencv4)
+find_package(OpenCV REQUIRED)
 
 set_target_properties(detect-image-demo PROPERTIES CXX_STANDARD 11)
 set_target_properties(detect-video-demo PROPERTIES CXX_STANDARD 11)

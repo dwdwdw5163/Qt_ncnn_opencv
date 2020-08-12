@@ -57,11 +57,11 @@ void vis_img(std::vector<float> &landmarks, cv::Mat &img, bool show_img = false)
 }
 int main(int argc, char** argv)
 {
-    if (argc != 2)
-    {
-        fprintf(stderr, "Usage: %s [video path]\n", argv[0]);
-        return -1;
-    }
+     if (argc != 2)
+     {
+         fprintf(stderr, "Usage: %s [video path]\n", argv[0]);
+         return -1;
+     }
     const int num_landmarks = 106 * 2;
     const char * video_path = argv[1];
     const char * param_path = "../pfld-opt.param";
@@ -78,11 +78,11 @@ int main(int argc, char** argv)
     int ori_h = cap.get(cv::CAP_PROP_FRAME_HEIGHT);//帧高度;
     int frameRate = cap.get(cv::CAP_PROP_FPS);
     int totalFrames = cap.get(cv::CAP_PROP_FRAME_COUNT);
-
+    std::cout << "all video frames is " << totalFrames << endl;
     cv::Mat frame;
     cv::VideoWriter out_video;
-    out_video.open("./output001.avi", cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), frameRate,
-                              cv::Size(ori_w, ori_h), true);
+    out_video.open("output001.avi",  cv::VideoWriter::fourcc('M', 'J', 'P', 'G'),
+                   frameRate,cv::Size(ori_w, ori_h), true);
     int * pResults = NULL;
     //pBuffer is used in the detection functions.
     //If you call functions in multiple threads, please create one buffer for each thread!
@@ -92,8 +92,8 @@ int main(int argc, char** argv)
         fprintf(stderr, "Can not alloc buffer.\n");
         return -1;
     }
-    int det_w = 240;
-    int det_h = 320;
+    int det_w = 320;
+    int det_h = 240;
     float landmarks[num_landmarks];
     Mat det_input;
     TickMeter cvtm;
@@ -103,7 +103,7 @@ int main(int argc, char** argv)
         timer.start();
         cap >> frame;
         if(frame.empty()) break;
-        resize(frame, det_input, Size(240, 320));
+        resize(frame, det_input, Size(det_w, det_h));
         TickMeter detect_timer;
         detect_timer.start();
         pResults = facedetect_cnn(pBuffer, (unsigned char*)(det_input.ptr(0)), det_w, det_h, (int)det_input.step);
@@ -130,13 +130,15 @@ int main(int argc, char** argv)
             h = int(h * 1.0 / det_h * ori_h);
             w = (w > ori_w) ? ori_w : w;
             h = (h > ori_h) ? ori_h : h;
-
+//            std::cout << x << " " << y << " " << w << " " << h << std::endl;
             //show the score of the face. Its range is [0-100]
             char sScore[256];
             snprintf(sScore, 256, "%d", confidence);
             if(confidence > 80){
                 cv::putText(result_image, sScore, cv::Point(x, y-3), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 0), 1);
                 //draw face rectangle
+                if(x + w >= ori_w) w = ori_w - x;
+                if(y + h >= ori_h) h = ori_h - y;
                 rectangle(result_image, Rect(x, y, w, h), Scalar(0, 255, 0), 2);
                 cv::Mat face = frame(cv::Rect(x, y, w ,h));
                 cv::resize(face, face, cv::Size(112, 112));
@@ -144,7 +146,7 @@ int main(int argc, char** argv)
                 ld_timer.start();
                 landmark_detector(pfld, face, landmarks, param_path, bin_path, 112);
                 ld_timer.stop();
-                for(int i = 0; i < num_landmarks / 2;i++){
+                for(int i = 0; i < num_landmarks / 2; i++){
                     cv::circle(result_image, cv::Point(landmarks[i * 2] * w + x, landmarks[i * 2 + 1] * h + y),
                                2,cv::Scalar(0, 0, 255), -1);
                 }
@@ -153,6 +155,8 @@ int main(int argc, char** argv)
         timer.stop();
         string fps = "FPS: " + to_string(1000 / timer.getTimeMilli());
         cv::putText(result_image, fps, cv::Point(20, 20), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 2);
+        cv::imshow("img", result_image);
+        cv::waitKey(2);
         out_video.write(result_image);
     }
     out_video.release();
