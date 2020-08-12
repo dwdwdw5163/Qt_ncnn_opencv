@@ -3,4 +3,5 @@ cmake-build-debug
 .DS_Store
 .idea
 3rd_party/ncnn
+frames
 !3rd_party
