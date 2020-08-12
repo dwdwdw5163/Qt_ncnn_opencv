@@ -4,4 +4,5 @@ cmake-build-debug
 .idea
 3rd_party/ncnn
 frames
+*.mp4
 !3rd_party
