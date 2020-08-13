@@ -136,6 +136,8 @@ int main(int argc, char** argv)
         if(confidence > 80){
             cv::putText(result_image, sScore, cv::Point(x, y-3), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 0), 1);
             //draw face rectangle
+            if(x + w >= ori_w) w = ori_w - x;
+            if(y + h >= ori_h) h = ori_h - y;
             rectangle(result_image, Rect(x, y, w, h), Scalar(0, 255, 0), 2);
             cv::Mat face = image(cv::Rect(x,y,w,h));
             cv::resize(face, face, cv::Size(112, 112));
