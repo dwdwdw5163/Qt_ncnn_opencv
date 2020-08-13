@@ -64,8 +64,8 @@ int main(int argc, char** argv)
      }
     const int num_landmarks = 106 * 2;
     const char * video_path = argv[1];
-    const char * param_path = "../pfld-opt.param";
-    const char * bin_path = "../pfld-opt.bin";
+    const char * param_path = "../model/pfld-opt.param";
+    const char * bin_path = "../model/pfld-opt.bin";
     ncnn::Net pfld;
     pfld.load_param(param_path);
     pfld.load_model(bin_path);

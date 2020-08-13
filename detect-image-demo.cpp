@@ -3,13 +3,13 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/opencv.hpp>
-#include <stdio.h>
-#include <time.h>
+#include <cstdio>
+#include <ctime>
 #include "facedetectcnn.h"
 #define DETECT_BUFFER_SIZE 0x20000
 using namespace  cv;
 
-static int landmark_detector(ncnn::Net &pfld, cv::Mat &bgr, float * landmarks, const char *param_path, const char *bin_path, int img_size = 112)
+static int landmark_detector(ncnn::Net &pfld, cv::Mat &bgr, float * landmarks,  int img_size = 112)
 {
     ncnn::Mat out;
     char  input_blob_name[] = "input";
@@ -56,13 +56,13 @@ int main(int argc, char** argv)
 {
     if (argc != 2)
     {
-        fprintf(stderr, "Usage: %s [imagepath]\n", argv[0]);
+        fprintf(stderr, "Usage: %s [image path]\n", argv[0]);
         return -1;
     }
     const int num_landmarks = 106 * 2;
     const char * imagepath = argv[1];
-    const char * param_path = "../pfld-opt.param";
-    const char * bin_path = "../pfld-opt.bin";
+    const char * param_path = "../model/pfld-opt.param";
+    const char * bin_path = "../model/pfld-opt.bin";
     ncnn::Net pfld;
     pfld.load_param(param_path);
     pfld.load_model(bin_path);
@@ -140,19 +140,18 @@ int main(int argc, char** argv)
             cv::Mat face = image(cv::Rect(x,y,w,h));
             cv::resize(face, face, cv::Size(112, 112));
             float landmarks[num_landmarks];
-            landmark_detector(pfld, face, landmarks, param_path, bin_path, 112);
+            landmark_detector(pfld, face, landmarks, 112);
             for(int i=0; i < num_landmarks / 2;i++){
                 cv::circle(result_image, cv::Point(landmarks[i * 2] * w + x, landmarks[i * 2 + 1] * h + y),
                            2,cv::Scalar(0, 0, 255), -1);
             }
-//            vis_img(landmarks, m, false);
         }
 
     }
     imshow("result", result_image);
 
     waitKey();
-
+    destroyAllWindows();
     //release the buffer
     free(pBuffer);
 
