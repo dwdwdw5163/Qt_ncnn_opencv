@@ -1,371 +1,414 @@
+if(CMAKE_TOOLCHAIN_FILE)
+    set(LIBRARY_OUTPUT_PATH_ROOT ${CMAKE_BINARY_DIR} CACHE PATH "root for library output, set this to change where android libs are compiled to")
+    # get absolute path, but get_filename_component ABSOLUTE only refer with source dir, so find_file here :(
+    get_filename_component(CMAKE_TOOLCHAIN_FILE_NAME ${CMAKE_TOOLCHAIN_FILE} NAME)
+    find_file(CMAKE_TOOLCHAIN_FILE ${CMAKE_TOOLCHAIN_FILE_NAME} PATHS ${CMAKE_SOURCE_DIR} NO_DEFAULT_PATH)
+    message(STATUS "CMAKE_TOOLCHAIN_FILE = ${CMAKE_TOOLCHAIN_FILE}")
+endif()
+
+if(NOT DEFINED CMAKE_INSTALL_PREFIX)
+    set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install" CACHE PATH "Installation Directory")
+endif()
+message(STATUS "CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}")
+
+if(NOT DEFINED NCNN_VERSION)
+    string(TIMESTAMP NCNN_VERSION "%Y%m%d")
+endif()
+
+set(NCNN_VERSION_MAJOR 1)
+set(NCNN_VERSION_MINOR 0)
+set(NCNN_VERSION_PATCH ${NCNN_VERSION})
+set(NCNN_VERSION_STRING ${NCNN_VERSION_MAJOR}.${NCNN_VERSION_MINOR}.${NCNN_VERSION_PATCH})
+if(APPLE OR IOS)
+    # macos / ios only accepts a.b.c.d.e where a=24bit b/c/d/e=10bit
+    # 20201228 to 20.12.28
+    string(SUBSTRING ${NCNN_VERSION} 2 2 NCNN_VERSION_YEAR)
+    string(SUBSTRING ${NCNN_VERSION} 4 2 NCNN_VERSION_MONTH)
+    string(SUBSTRING ${NCNN_VERSION} 6 2 NCNN_VERSION_DAY)
+    set(NCNN_VERSION_STRING ${NCNN_VERSION_MAJOR}.${NCNN_VERSION_MINOR}.${NCNN_VERSION_YEAR}.${NCNN_VERSION_MONTH}.${NCNN_VERSION_DAY})
+endif()
+message(STATUS "NCNN_VERSION_STRING = ${NCNN_VERSION_STRING}")
+
+cmake_minimum_required(VERSION 2.8.12)
+
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE release CACHE STRING "Choose the type of build" FORCE)
+endif()
+
+if(NOT CMAKE_VERSION VERSION_LESS "3.15")
+    # enable CMAKE_MSVC_RUNTIME_LIBRARY
+    cmake_policy(SET CMP0091 NEW)
+endif()
+
+if(POLICY CMP0025)
+    # reference from https://cmake.org/cmake/help/latest/policy/CMP0025.html
+    cmake_policy(SET CMP0025 NEW)
+endif()
+
+project(ncnn)
+
+if(MSVC AND NOT CMAKE_VERSION VERSION_LESS "3.15")
+    option(NCNN_BUILD_WITH_STATIC_CRT "Enables use of statically linked CRT for statically linked ncnn" OFF)
+    if(NCNN_BUILD_WITH_STATIC_CRT)
+        # cmake before version 3.15 not work
+        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+    endif()
+endif()
+
+option(NCNN_SHARED_LIB "shared library support" OFF)
+option(NCNN_ENABLE_LTO "enable link-time optimization" OFF)
+option(NCNN_OPENMP "openmp support" ON)
+option(NCNN_STDIO "load model from external file" ON)
+option(NCNN_STRING "plain and verbose string" ON)
+option(NCNN_INSTALL_SDK "install ncnn library and headers" ON)
+option(NCNN_SIMPLEOCV "minimal opencv structure emulation" OFF)
+option(NCNN_SIMPLEOMP "minimal openmp runtime emulation" OFF)
+option(NCNN_SIMPLESTL "minimal cpp stl structure emulation" OFF)
+option(NCNN_THREADS "build with threads" ON)
+option(NCNN_BENCHMARK "print benchmark information for every layer" OFF)
+option(NCNN_C_API "build with C api" ON)
+option(NCNN_PLATFORM_API "build with platform api candy" ON)
+option(NCNN_PIXEL "convert and resize from/to image pixel" ON)
+option(NCNN_PIXEL_ROTATE "rotate image pixel orientation" ON)
+option(NCNN_PIXEL_AFFINE "warp affine image pixel" ON)
+option(NCNN_PIXEL_DRAWING "draw basic figure and text" ON)
+option(NCNN_CMAKE_VERBOSE "print verbose cmake messages" OFF)
+option(NCNN_VULKAN "vulkan compute support" OFF)
+option(NCNN_SYSTEM_GLSLANG "use system glslang library" OFF)
+option(NCNN_RUNTIME_CPU "runtime dispatch cpu routines" ON)
+option(NCNN_DISABLE_PIC "disable position-independent code" OFF)
+option(NCNN_BUILD_TESTS "build tests" OFF)
+option(NCNN_COVERAGE "build for coverage" OFF)
+option(NCNN_BUILD_BENCHMARK "build benchmark" ON)
+option(NCNN_PYTHON "build python api" OFF)
+option(NCNN_INT8 "int8 inference" ON)
+option(NCNN_BF16 "bf16 inference" ON)
+option(NCNN_FORCE_INLINE "force inline some function" ON)
+
+if(ANDROID OR IOS OR NCNN_SIMPLESTL OR CMAKE_CROSSCOMPILING)
+    option(NCNN_DISABLE_RTTI "disable rtti" ON)
+    option(NCNN_BUILD_TOOLS "build tools" OFF)
+    option(NCNN_BUILD_EXAMPLES "build examples" OFF)
+else()
+    option(NCNN_DISABLE_RTTI "disable rtti" OFF)
+    option(NCNN_BUILD_TOOLS "build tools" ON)
+    option(NCNN_BUILD_EXAMPLES "build examples" ON)
+endif()
+
+if(ANDROID OR IOS OR LINUX OR NCNN_SIMPLESTL)
+    option(NCNN_DISABLE_EXCEPTION "disable exception" ON)
+else()
+    option(NCNN_DISABLE_EXCEPTION "disable exception" OFF)
+endif()
+
+if(NCNN_SHARED_LIB)
+    if(NCNN_BUILD_TESTS)
+        message(WARNING "NCNN_SHARED_LIB must be OFF to build tests! NCNN_BUILD_TESTS will be turned off.")
+        set(NCNN_BUILD_TESTS OFF)
+    endif()
+
+    if(NCNN_ENABLE_LTO)
+        # enable global link time optimization
+        cmake_policy(SET CMP0069 NEW)
+        set(CMAKE_POLICY_DEFAULT_CMP0069 NEW)
+        include(CheckIPOSupported)
+        check_ipo_supported(RESULT ipo_supported OUTPUT ipo_supported_output)
+        if(ipo_supported)
+            set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+        else()
+            message(WARNING "IPO is not supported: ${ipo_supported_output}")
+            set(NCNN_ENABLE_LTO OFF)
+        endif()
+    endif()
+endif()
+
+if(NOT NCNN_STDIO OR NOT NCNN_STRING)
+    if(NCNN_BUILD_TOOLS)
+        message(WARNING "NCNN_STDIO or NCNN_STRING disabled, NCNN_BUILD_TOOLS will be turned off.")
+        set(NCNN_BUILD_TOOLS OFF)
+    endif()
+    if(NCNN_BUILD_EXAMPLES)
+        message(WARNING "NCNN_STDIO or NCNN_STRING disabled, NCNN_BUILD_EXAMPLES will be turned off.")
+        set(NCNN_BUILD_EXAMPLES OFF)
+    endif()
+    if(NCNN_BUILD_BENCHMARK)
+        message(WARNING "NCNN_STDIO or NCNN_STRING disabled, NCNN_BUILD_BENCHMARK will be turned off.")
+        set(NCNN_BUILD_BENCHMARK OFF)
+    endif()
+    if(NCNN_BUILD_TESTS)
+        message(WARNING "NCNN_STDIO or NCNN_STRING disabled, NCNN_BUILD_TESTS will be turned off.")
+        set(NCNN_BUILD_TESTS OFF)
+    endif()
+endif()
 
 ##############################################
 
-configure_file(platform.h.in ${CMAKE_CURRENT_BINARY_DIR}/platform.h)
+if((IOS AND CMAKE_OSX_ARCHITECTURES MATCHES "arm")
+    OR (APPLE AND CMAKE_OSX_ARCHITECTURES MATCHES "arm64")
+    OR (CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm|aarch64)")
+    OR ((CMAKE_CXX_COMPILER_ID MATCHES "MSVC" OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_CXX_SIMULATE_ID MATCHES "MSVC" AND CMAKE_CXX_COMPILER_FRONTEND_VARIANT MATCHES "MSVC")) AND (${CMAKE_GENERATOR_PLATFORM} MATCHES "^(arm|arm64)")))
+    set(NCNN_TARGET_ARCH arm)
 
-if(NCNN_VULKAN)
-    find_program(GLSLANGVALIDATOR_EXECUTABLE NAMES glslangValidator PATHS $ENV{VULKAN_SDK}/bin NO_CMAKE_FIND_ROOT_PATH)
-    message(STATUS "Found glslangValidator: ${GLSLANGVALIDATOR_EXECUTABLE}")
-endif()
-
-set(ncnn_SRCS
-    allocator.cpp
-    blob.cpp
-    command.cpp
-    cpu.cpp
-    datareader.cpp
-    gpu.cpp
-    layer.cpp
-    mat.cpp
-    mat_pixel.cpp
-    mat_pixel_resize.cpp
-    mat_pixel_rotate.cpp
-    modelbin.cpp
-    net.cpp
-    opencv.cpp
-    option.cpp
-    paramdict.cpp
-    pipeline.cpp
-    benchmark.cpp
-)
-
-if(ANDROID)
-    list(APPEND ncnn_SRCS mat_pixel_android.cpp)
-endif()
-
-include(${CMAKE_SOURCE_DIR}/cmake/ncnn_generate_shader_spv_header.cmake)
-
-macro(ncnn_add_shader SHADER_SRC)
-    ncnn_generate_shader_spv_header(SHADER_SPV_HEADER SHADER_SPV_HEX_HEADERS ${SHADER_SRC})
-
-    get_filename_component(SHADER_SPV_HEADER_NAME ${SHADER_SPV_HEADER} NAME)
-    string(APPEND layer_shader_spv_data "#include \"${SHADER_SPV_HEADER_NAME}\"\n")
-
-    get_filename_component(SHADER_SRC_NAME_WE ${SHADER_SRC} NAME_WE)
-    string(APPEND layer_shader_registry "{\"${SHADER_SRC_NAME_WE}\",${SHADER_SRC_NAME_WE}_spv_data,sizeof(${SHADER_SRC_NAME_WE}_spv_data)},\n")
-    string(APPEND layer_shader_registry "{\"${SHADER_SRC_NAME_WE}_fp16p\",${SHADER_SRC_NAME_WE}_fp16p_spv_data,sizeof(${SHADER_SRC_NAME_WE}_fp16p_spv_data)},\n")
-    string(APPEND layer_shader_registry "{\"${SHADER_SRC_NAME_WE}_fp16pa\",${SHADER_SRC_NAME_WE}_fp16pa_spv_data,sizeof(${SHADER_SRC_NAME_WE}_fp16pa_spv_data)},\n")
-    string(APPEND layer_shader_registry "{\"${SHADER_SRC_NAME_WE}_fp16s\",${SHADER_SRC_NAME_WE}_fp16s_spv_data,sizeof(${SHADER_SRC_NAME_WE}_fp16s_spv_data)},\n")
-    string(APPEND layer_shader_registry "{\"${SHADER_SRC_NAME_WE}_fp16sa\",${SHADER_SRC_NAME_WE}_fp16sa_spv_data,sizeof(${SHADER_SRC_NAME_WE}_fp16sa_spv_data)},\n")
-
-    list(APPEND SHADER_SPV_HEX_FILES ${SHADER_SPV_HEADER})
-    list(APPEND SHADER_SPV_HEX_FILES ${SHADER_SPV_HEX_HEADERS})
-endmacro()
-
-macro(ncnn_add_layer class)
-    string(TOLOWER ${class} name)
-
-    # WITH_LAYER_xxx option
-    if(${ARGC} EQUAL 2)
-        option(WITH_LAYER_${name} "build with layer ${name}" ${ARGV1})
-    else()
-        option(WITH_LAYER_${name} "build with layer ${name}" ON)
+    if(NOT (CMAKE_CXX_COMPILER_ID MATCHES "MSVC" OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_CXX_SIMULATE_ID MATCHES "MSVC" AND CMAKE_CXX_COMPILER_FRONTEND_VARIANT MATCHES "MSVC")))
+        include(CheckCXXCompilerFlag)
+        check_cxx_compiler_flag("-march=armv8.2-a+fp16" NCNN_COMPILER_SUPPORT_ARM82_FP16)
+        check_cxx_compiler_flag("-march=armv8.2-a+fp16+dotprod" NCNN_COMPILER_SUPPORT_ARM82_FP16_DOTPROD)
     endif()
 
-    if(NCNN_CMAKE_VERBOSE)
-        message(STATUS "WITH_LAYER_${name} = ${WITH_LAYER_${name}}")
-    endif()
-
-    if(WITH_LAYER_${name})
-        list(APPEND ncnn_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/layer/${name}.cpp)
-
-        # look for arch specific implementation and append source
-        # optimized implementation for armv7, aarch64 or x86
-        if((IOS AND CMAKE_OSX_ARCHITECTURES MATCHES "arm")
-            OR (CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm|aarch64)"))
-            set(arch arm)
-        elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(mips)")
-            set(arch mips)
+    if(NCNN_COMPILER_SUPPORT_ARM82_FP16)
+        option(NCNN_ARM82 "optimize aarch64 platform with armv8.2" ON)
+        if(NCNN_COMPILER_SUPPORT_ARM82_FP16_DOTPROD)
+            if(NCNN_ARM82)
+                option(NCNN_ARM82DOT "optimize aarch64 platform with armv8.2 dotprod" ON)
+            endif()
         else()
-            set(arch x86)
+            message(WARNING "The compiler does not support armv8.2 dotprod. NCNN_ARM82DOT will be OFF.")
         endif()
-
-        set(LAYER_ARCH_SRC ${CMAKE_CURRENT_SOURCE_DIR}/layer/${arch}/${name}_${arch}.cpp)
-        if(EXISTS ${LAYER_ARCH_SRC})
-            set(WITH_LAYER_${name}_${arch} 1)
-            list(APPEND ncnn_SRCS ${LAYER_ARCH_SRC})
-        endif()
-
-        set(LAYER_VULKAN_SRC ${CMAKE_CURRENT_SOURCE_DIR}/layer/vulkan/${name}_vulkan.cpp)
-        if(NCNN_VULKAN AND EXISTS ${LAYER_VULKAN_SRC})
-            set(WITH_LAYER_${name}_vulkan 1)
-            list(APPEND ncnn_SRCS ${LAYER_VULKAN_SRC})
-        endif()
-    endif()
-
-    # generate layer_declaration and layer_registry file
-    if(WITH_LAYER_${name})
-        set(layer_declaration "${layer_declaration}#include \"layer/${name}.h\"\n")
-        set(layer_declaration_class "class ${class}_final : virtual public ${class}")
-        set(create_pipeline_content "        { int ret = ${class}::create_pipeline(opt); if (ret) return ret; }\n")
-        set(destroy_pipeline_content "        { int ret = ${class}::destroy_pipeline(opt); if (ret) return ret; }\n")
-    endif()
-
-    if(WITH_LAYER_${name}_${arch})
-        set(layer_declaration "${layer_declaration}#include \"layer/${arch}/${name}_${arch}.h\"\n")
-        set(layer_declaration_class "${layer_declaration_class}, virtual public ${class}_${arch}")
-        set(create_pipeline_content "${create_pipeline_content}        { int ret = ${class}_${arch}::create_pipeline(opt); if (ret) return ret; }\n")
-        set(destroy_pipeline_content "        { int ret = ${class}_${arch}::destroy_pipeline(opt); if (ret) return ret; }\n${destroy_pipeline_content}")
-    endif()
-
-    if(WITH_LAYER_${name}_vulkan)
-        set(layer_declaration "${layer_declaration}#include \"layer/vulkan/${name}_vulkan.h\"\n")
-        set(layer_declaration_class "${layer_declaration_class}, virtual public ${class}_vulkan")
-        set(create_pipeline_content "${create_pipeline_content}        if (vkdev) { int ret = ${class}_vulkan::create_pipeline(opt); if (ret) return ret; }\n")
-        set(destroy_pipeline_content "        if (vkdev) { int ret = ${class}_vulkan::destroy_pipeline(opt); if (ret) return ret; }\n${destroy_pipeline_content}")
-
-        file(GLOB_RECURSE SHADER_SRCS "layer/vulkan/shader/${name}.comp")
-        file(GLOB_RECURSE SHADER_SUBSRCS "layer/vulkan/shader/${name}_*.comp")
-        list(APPEND SHADER_SRCS ${SHADER_SUBSRCS})
-        foreach(SHADER_SRC ${SHADER_SRCS})
-            ncnn_add_shader(${SHADER_SRC})
-        endforeach()
-    endif()
-
-    if(WITH_LAYER_${name})
-        set(layer_declaration "${layer_declaration}namespace ncnn {\n${layer_declaration_class}\n{\n")
-        set(layer_declaration "${layer_declaration}public:\n")
-        set(layer_declaration "${layer_declaration}    virtual int create_pipeline(const Option& opt) {\n${create_pipeline_content}        return 0;\n    }\n")
-        set(layer_declaration "${layer_declaration}    virtual int destroy_pipeline(const Option& opt) {\n${destroy_pipeline_content}        return 0;\n    }\n")
-        set(layer_declaration "${layer_declaration}};\n")
-        set(layer_declaration "${layer_declaration}DEFINE_LAYER_CREATOR(${class}_final)\n} // namespace ncnn\n\n")
-    endif()
-
-    if(WITH_LAYER_${name})
-        set(layer_registry "${layer_registry}#if NCNN_STRING\n{\"${class}\",${class}_final_layer_creator},\n#else\n{${class}_final_layer_creator},\n#endif\n")
     else()
-        set(layer_registry "${layer_registry}#if NCNN_STRING\n{\"${class}\",0},\n#else\n{0},\n#endif\n")
+        message(WARNING "The compiler does not support armv8.2. NCNN_ARM82 will be OFF.")
     endif()
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(mips)")
+    set(NCNN_TARGET_ARCH mips)
 
-    # generate layer_type_enum file
-    set(layer_type_enum "${layer_type_enum}${class} = ${__LAYER_TYPE_ENUM_INDEX},\n")
-    math(EXPR __LAYER_TYPE_ENUM_INDEX "${__LAYER_TYPE_ENUM_INDEX}+1")
-endmacro()
+    include(CheckCXXCompilerFlag)
+    check_cxx_compiler_flag("-mmsa" NCNN_COMPILER_SUPPORT_MIPS_MSA)
 
-# look for vulkan compute shader and compile
-set(SHADER_SPV_HEX_FILES)
+    set(CMAKE_REQUIRED_FLAGS "-mloongson-mmi -I${CMAKE_CURRENT_SOURCE_DIR}/src/layer/mips")
+    check_cxx_source_compiles("#include \"loongson_mmi.h\"\nint main() { int16x4_t _a, _b; int32x2_t _s = __mmi_pmaddhw(_a, _b); return 0; }" NCNN_COMPILER_SUPPORT_LOONGSON_MMI)
 
-set(__LAYER_TYPE_ENUM_INDEX 0)
-
-# layer implementation
-ncnn_add_layer(AbsVal)
-ncnn_add_layer(ArgMax OFF)
-ncnn_add_layer(BatchNorm)
-ncnn_add_layer(Bias)
-ncnn_add_layer(BNLL)
-ncnn_add_layer(Concat)
-ncnn_add_layer(Convolution)
-ncnn_add_layer(Crop)
-ncnn_add_layer(Deconvolution)
-ncnn_add_layer(Dropout)
-ncnn_add_layer(Eltwise)
-ncnn_add_layer(ELU)
-ncnn_add_layer(Embed)
-ncnn_add_layer(Exp)
-ncnn_add_layer(Flatten)
-ncnn_add_layer(InnerProduct)
-ncnn_add_layer(Input)
-ncnn_add_layer(Log)
-ncnn_add_layer(LRN)
-ncnn_add_layer(MemoryData)
-ncnn_add_layer(MVN)
-ncnn_add_layer(Pooling)
-ncnn_add_layer(Power)
-ncnn_add_layer(PReLU)
-ncnn_add_layer(Proposal)
-ncnn_add_layer(Reduction)
-ncnn_add_layer(ReLU)
-ncnn_add_layer(Reshape)
-ncnn_add_layer(ROIPooling)
-ncnn_add_layer(Scale)
-ncnn_add_layer(Sigmoid)
-ncnn_add_layer(Slice)
-ncnn_add_layer(Softmax)
-ncnn_add_layer(Split)
-ncnn_add_layer(SPP OFF)
-ncnn_add_layer(TanH)
-ncnn_add_layer(Threshold)
-ncnn_add_layer(Tile OFF)
-ncnn_add_layer(RNN OFF)
-ncnn_add_layer(LSTM)
-ncnn_add_layer(BinaryOp)
-ncnn_add_layer(UnaryOp)
-ncnn_add_layer(ConvolutionDepthWise)
-ncnn_add_layer(Padding)
-ncnn_add_layer(Squeeze)
-ncnn_add_layer(ExpandDims)
-ncnn_add_layer(Normalize)
-ncnn_add_layer(Permute)
-ncnn_add_layer(PriorBox)
-ncnn_add_layer(DetectionOutput)
-ncnn_add_layer(Interp)
-ncnn_add_layer(DeconvolutionDepthWise)
-ncnn_add_layer(ShuffleChannel)
-ncnn_add_layer(InstanceNorm)
-ncnn_add_layer(Clip)
-ncnn_add_layer(Reorg)
-ncnn_add_layer(YoloDetectionOutput)
-ncnn_add_layer(Quantize)
-ncnn_add_layer(Dequantize)
-ncnn_add_layer(Yolov3DetectionOutput)
-ncnn_add_layer(PSROIPooling)
-ncnn_add_layer(ROIAlign OFF)
-ncnn_add_layer(Packing)
-ncnn_add_layer(Requantize)
-ncnn_add_layer(Cast)
-ncnn_add_layer(HardSigmoid)
-ncnn_add_layer(SELU)
-ncnn_add_layer(HardSwish)
-ncnn_add_layer(Noop)
-ncnn_add_layer(PixelShuffle)
-
-if(NCNN_VULKAN)
-    ncnn_add_shader(${CMAKE_CURRENT_SOURCE_DIR}/convert_ycbcr.comp)
-endif()
-
-add_custom_target(generate-spirv DEPENDS ${SHADER_SPV_HEX_FILES})
-
-# create new
-configure_file(layer_declaration.h.in ${CMAKE_CURRENT_BINARY_DIR}/layer_declaration.h)
-configure_file(layer_registry.h.in ${CMAKE_CURRENT_BINARY_DIR}/layer_registry.h)
-configure_file(layer_type_enum.h.in ${CMAKE_CURRENT_BINARY_DIR}/layer_type_enum.h)
-configure_file(layer_shader_registry.h.in ${CMAKE_CURRENT_BINARY_DIR}/layer_shader_registry.h)
-configure_file(layer_shader_spv_data.h.in ${CMAKE_CURRENT_BINARY_DIR}/layer_shader_spv_data.h)
-
-add_library(ncnn STATIC ${ncnn_SRCS})
-
-target_include_directories(ncnn
-    PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-        $<INSTALL_INTERFACE:include/ncnn>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-    PRIVATE
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/layer>)
-
-if(NCNN_OPENMP)
-    find_package(OpenMP)
-    if(NOT TARGET OpenMP::OpenMP_CXX AND (OpenMP_CXX_FOUND OR OPENMP_FOUND))
-        target_compile_options(ncnn PRIVATE ${OpenMP_CXX_FLAGS})
+    if(NCNN_COMPILER_SUPPORT_MIPS_MSA)
+        option(NCNN_MSA "optimize mips platform with msa extension" ON)
+    else()
+        message(WARNING "The compiler does not support msa extension. NCNN_MSA will be OFF.")
     endif()
-endif()
+    if(NCNN_COMPILER_SUPPORT_LOONGSON_MMI)
+        option(NCNN_MMI "optimize mips platform with loongson mmi extension" ON)
+    else()
+        message(WARNING "The compiler does not support loongson mmi extension. NCNN_MMI will be OFF.")
+    endif()
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(riscv)")
+    set(NCNN_TARGET_ARCH riscv)
 
-if(NCNN_VULKAN)
-    find_package(Vulkan REQUIRED)
-    target_link_libraries(ncnn PUBLIC Vulkan::Vulkan)
-endif()
+    include(CheckCXXCompilerFlag)
+    check_cxx_compiler_flag("-march=rv64gcv" NCNN_COMPILER_SUPPORT_RVV)
+    check_cxx_compiler_flag("-march=rv64gcv_zfh" NCNN_COMPILER_SUPPORT_RVV_FP16)
 
-if(ANDROID_NDK)
-    target_link_libraries(ncnn PUBLIC android)
-endif()
-
-if(WIN32)
-    target_compile_definitions(ncnn
-        PUBLIC NOMINMAX)
-endif()
-
-if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC"
-    OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_CXX_SIMULATE_ID MATCHES "MSVC"))
-    target_compile_definitions(ncnn
-        PRIVATE _SCL_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
+    if(NCNN_COMPILER_SUPPORT_RVV)
+        option(NCNN_RVV "optimize risc-v platform with v extension" ON)
+        if(NOT NCNN_COMPILER_SUPPORT_RVV_FP16)
+            message(WARNING "The compiler does not support risc-v zfh extension. Upgrading your toolchain is strongly recommended.")
+        endif()
+    else()
+        message(WARNING "The compiler does not support risc-v v extension. NCNN_RVV will be OFF.")
+    endif()
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(powerpc|ppc)")
+    set(NCNN_TARGET_ARCH powerpc)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(loongarch)")
+    set(NCNN_TARGET_ARCH loongarch)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(xtensa)")
+    set(NCNN_TARGET_ARCH xtensa)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(s390x)")
+    set(NCNN_TARGET_ARCH s390x)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(sw_64)")
+    set(NCNN_TARGET_ARCH sw_64)
+    #sw_64 is alpha-like platform
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mieee")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mieee")
 else()
-    target_compile_options(ncnn
-        PRIVATE -Wall -Wextra -Wno-unused-function)
-    if(NOT NCNN_DISABLE_PIC)
-        set_target_properties(ncnn
-            PROPERTIES
-                POSITION_INDEPENDENT_CODE ON
-                INTERFACE_POSITION_INDEPENDENT_CODE ON)
-    endif()
+    set(NCNN_TARGET_ARCH x86)
 
-    if(CMAKE_BUILD_TYPE MATCHES "(Release|RELEASE|release)")
-        if(NOT CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
-            target_compile_options(ncnn PRIVATE -Ofast)
+    option(NCNN_SSE2 "optimize x86 platform with sse2 extension" ON)
+
+    include(CheckCXXCompilerFlag)
+    if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC" OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_CXX_SIMULATE_ID MATCHES "MSVC" AND CMAKE_CXX_COMPILER_FRONTEND_VARIANT MATCHES "MSVC"))
+        check_cxx_compiler_flag("/arch:AVX" NCNN_COMPILER_SUPPORT_X86_AVX)
+        check_cxx_compiler_flag("/arch:AVX" NCNN_COMPILER_SUPPORT_X86_FMA)
+        check_cxx_compiler_flag("/arch:AVX" NCNN_COMPILER_SUPPORT_X86_XOP)
+        check_cxx_compiler_flag("/arch:AVX" NCNN_COMPILER_SUPPORT_X86_F16C)
+        check_cxx_compiler_flag("/arch:AVX2" NCNN_COMPILER_SUPPORT_X86_AVX2)
+        check_cxx_compiler_flag("/arch:AVX2" NCNN_COMPILER_SUPPORT_X86_AVX_VNNI)
+        check_cxx_compiler_flag("/arch:AVX512" NCNN_COMPILER_SUPPORT_X86_AVX512)
+        check_cxx_compiler_flag("/arch:AVX512" NCNN_COMPILER_SUPPORT_X86_AVX512_VNNI)
+        if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 19.16)
+            # vs2017+ supports avx512 and vnni
+            set(NCNN_COMPILER_SUPPORT_X86_AVX_VNNI OFF)
+            set(NCNN_COMPILER_SUPPORT_X86_AVX512 OFF)
+            set(NCNN_COMPILER_SUPPORT_X86_AVX512_VNNI OFF)
         endif()
-
-        target_compile_options(ncnn PRIVATE -ffast-math)
-    endif()
-
-    if(PI3)
-        target_compile_options(ncnn
-            PRIVATE -march=native -mfpu=neon -mfloat-abi=hard)
-        target_compile_definitions(ncnn
-            PRIVATE __ARM_NEON __ANDROID__)
-    endif()
-    # target_compile_options(ncnn PRIVATE -march=native)
-    # set_target_properties(ncnn PROPERTIES INTERPROCEDURAL_OPTIMIZATION ON)
-    target_compile_options(ncnn PRIVATE -fvisibility=hidden -fvisibility-inlines-hidden)
-endif()
-
-if(NCNN_DISABLE_RTTI)
-    target_compile_options(ncnn PUBLIC -fno-rtti)
-endif()
-
-if(NCNN_DISABLE_EXCEPTION)
-    target_compile_options(ncnn PUBLIC -fno-exceptions)
-endif()
-
-if(ANDROID OR IOS)
-    # disable shared library on android and xcode ios
-    set_property(GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS FALSE)
-elseif(NCNN_AVX2)
-    #set up according to your own system environment
-    #Windows
-    if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC"
-        OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_CXX_SIMULATE_ID MATCHES "MSVC"))
-        target_compile_options(ncnn PRIVATE /arch:AVX2 /DAVX2)
-    #Linux
     else()
-        target_compile_options(ncnn PRIVATE -mfma -mf16c)
-    endif()
-endif()
+        check_cxx_compiler_flag("-mavx" NCNN_COMPILER_SUPPORT_X86_AVX)
+        check_cxx_compiler_flag("-mfma" NCNN_COMPILER_SUPPORT_X86_FMA)
+        check_cxx_compiler_flag("-mxop" NCNN_COMPILER_SUPPORT_X86_XOP)
+        check_cxx_compiler_flag("-mf16c" NCNN_COMPILER_SUPPORT_X86_F16C)
+        check_cxx_compiler_flag("-mfma -mf16c -mavx2" NCNN_COMPILER_SUPPORT_X86_AVX2)
+        check_cxx_compiler_flag("-mfma -mf16c -mavx512f -mavx512bw -mavx512vl" NCNN_COMPILER_SUPPORT_X86_AVX512)
 
-add_dependencies(ncnn generate-spirv)
+        set(CMAKE_REQUIRED_FLAGS "-mfma -mf16c -mavx2 -mavxvnni")
+        check_cxx_source_compiles("#include <immintrin.h>\nint main() { __m256i _s, _a, _b; _s = _mm256_dpwssd_epi32(_s, _a, _b); return 0; }" NCNN_COMPILER_SUPPORT_X86_AVX_VNNI)
 
-if(NCNN_OPENMP AND (OpenMP_CXX_FOUND OR OPENMP_FOUND))
-    if(NCNN_CMAKE_VERBOSE)
-        message("Building with OpenMP")
+        set(CMAKE_REQUIRED_FLAGS "-mfma -mf16c -mavx512f -mavx512bw -mavx512vl -mavx512vnni")
+        check_cxx_source_compiles("#include <immintrin.h>\nint main() { __m256i _s, _a, _b; _s = _mm256_dpwssd_epi32(_s, _a, _b); return 0; }" NCNN_COMPILER_SUPPORT_X86_AVX512_VNNI)
+
+        unset(CMAKE_REQUIRED_FLAGS)
     endif()
-    if(OpenMP_CXX_FOUND)
-        target_link_libraries(ncnn PUBLIC OpenMP::OpenMP_CXX)
+
+    if(NOT CMAKE_SYSTEM_NAME STREQUAL "Emscripten" AND NCNN_COMPILER_SUPPORT_X86_AVX)
+        option(NCNN_AVX "optimize x86 platform with avx extension" ON)
+        if(NCNN_COMPILER_SUPPORT_X86_FMA)
+            if(NCNN_AVX)
+                option(NCNN_FMA "optimize x86 platform with fma extension" ON)
+            endif()
+        else()
+            message(WARNING "The compiler does not support fma extension. NCNN_FMA will be OFF.")
+        endif()
+        if(NCNN_COMPILER_SUPPORT_X86_XOP)
+            if(NCNN_AVX)
+                option(NCNN_XOP "optimize x86 platform with xop extension" ON)
+            endif()
+        else()
+            message(WARNING "The compiler does not support xop extension. NCNN_XOP will be OFF.")
+        endif()
+        if(NCNN_COMPILER_SUPPORT_X86_F16C)
+            if(NCNN_AVX)
+                option(NCNN_F16C "optimize x86 platform with f16c extension" ON)
+            endif()
+        else()
+            message(WARNING "The compiler does not support f16c extension. NCNN_F16C will be OFF.")
+        endif()
+        if(NCNN_COMPILER_SUPPORT_X86_AVX2)
+            if(NCNN_AVX)
+                option(NCNN_AVX2 "optimize x86 platform with avx2 extension" ON)
+            endif()
+            if(NCNN_COMPILER_SUPPORT_X86_AVX_VNNI)
+                if(NCNN_AVX2)
+                    option(NCNN_AVXVNNI "optimize x86 platform with avx vnni extension" ON)
+                endif()
+            else()
+                message(WARNING "The compiler does not support avx vnni extension. NCNN_AVXVNNI will be OFF.")
+            endif()
+            if(NCNN_COMPILER_SUPPORT_X86_AVX512)
+                if(NCNN_AVX2)
+                    option(NCNN_AVX512 "optimize x86 platform with avx512 extension" ON)
+                endif()
+                if(NCNN_COMPILER_SUPPORT_X86_AVX512_VNNI)
+                    if(NCNN_AVX512)
+                        option(NCNN_AVX512VNNI "optimize x86 platform with avx512 vnni extension" ON)
+                    endif()
+                else()
+                    message(WARNING "The compiler does not support avx512 vnni extension. NCNN_AVX512VNNI will be OFF.")
+                endif()
+            else()
+                message(WARNING "The compiler does not support avx512 extension. NCNN_AVX512 will be OFF.")
+            endif()
+        else()
+            message(WARNING "The compiler does not support avx2 extension. NCNN_AVX2 will be OFF.")
+        endif()
     else()
-        target_link_libraries(ncnn PRIVATE "${OpenMP_CXX_FLAGS}")
+        message(WARNING "The compiler does not support avx extension. NCNN_AVX will be OFF.")
     endif()
 endif()
 
-if(NCNN_INSTALL_SDK)
-    install(TARGETS ncnn EXPORT ncnn ARCHIVE DESTINATION lib)
-    install(FILES
-        allocator.h
-        blob.h
-        command.h
-        cpu.h
-        datareader.h
-        gpu.h
-        layer.h
-        layer_type.h
-        mat.h
-        modelbin.h
-        net.h
-        opencv.h
-        option.h
-        paramdict.h
-        pipeline.h
-        benchmark.h
-        ${CMAKE_CURRENT_BINARY_DIR}/layer_type_enum.h
-        ${CMAKE_CURRENT_BINARY_DIR}/platform.h
-        DESTINATION include/ncnn
-    )
-    install(EXPORT ncnn
-        DESTINATION lib/cmake/ncnn)
-    configure_file(${CMAKE_CURRENT_LIST_DIR}/../cmake/ncnnConfig.cmake.in
-        ncnnConfig.cmake
-        @ONLY)
-    install(FILES
-        ${CMAKE_CURRENT_BINARY_DIR}/ncnnConfig.cmake
-        DESTINATION lib/cmake/ncnn)
-endif()
+message(STATUS "Target arch: ${NCNN_TARGET_ARCH}")
 
-# add ncnn and generate-spirv to a virtual project group
+##############################################
+
+# set cmake default folder name
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-set_property(TARGET ncnn PROPERTY FOLDER "libncnn")
-set_property(TARGET generate-spirv PROPERTY FOLDER "libncnn")
+set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "cmake")
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -s FORCE_FILESYSTEM=1 -s INITIAL_MEMORY=256MB -s EXIT_RUNTIME=1")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s FORCE_FILESYSTEM=1 -s INITIAL_MEMORY=256MB -s EXIT_RUNTIME=1")
+    set(CMAKE_EXECUTBLE_LINKER_FLAGS "${CMAKE_EXECUTBLE_LINKER_FLAGS} -s FORCE_FILESYSTEM=1 -s INITIAL_MEMORY=256MB -s EXIT_RUNTIME=1")
+
+    if(NCNN_OPENMP AND NCNN_SIMPLEOMP)
+        # TODO better flags for emscripten
+        # node --experimental-wasm-threads xxx.js
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -s USE_PTHREADS=1 -s PTHREAD_POOL_SIZE=15")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s USE_PTHREADS=1 -s PTHREAD_POOL_SIZE=15")
+        set(CMAKE_EXECUTBLE_LINKER_FLAGS "${CMAKE_EXECUTBLE_LINKER_FLAGS} -s USE_PTHREADS=1 -s PTHREAD_POOL_SIZE=15")
+    endif()
+endif()
+
+if(NCNN_VULKAN)
+    if(NCNN_SYSTEM_GLSLANG)
+        set(GLSLANG_TARGET_DIR "GLSLANG-NOTFOUND" CACHE PATH "Absolute path to glslangTargets.cmake directory")
+        if(NOT GLSLANG_TARGET_DIR AND NOT DEFINED ENV{GLSLANG_TARGET_DIR})
+            message(WARNING "GLSLANG_TARGET_DIR must be defined! NCNN_SYSTEM_GLSLANG will be turned off.")
+            set(NCNN_SYSTEM_GLSLANG OFF)
+        else()
+            message(STATUS "Using glslang install located at ${GLSLANG_TARGET_DIR}")
+
+            find_package(Threads)
+
+            include("${GLSLANG_TARGET_DIR}/OSDependentTargets.cmake")
+            include("${GLSLANG_TARGET_DIR}/OGLCompilerTargets.cmake")
+            if(EXISTS "${GLSLANG_TARGET_DIR}/HLSLTargets.cmake")
+                # hlsl support can be optional
+                include("${GLSLANG_TARGET_DIR}/HLSLTargets.cmake")
+            endif()
+            include("${GLSLANG_TARGET_DIR}/glslangTargets.cmake")
+            include("${GLSLANG_TARGET_DIR}/SPIRVTargets.cmake")
+
+            if (NOT TARGET glslang OR NOT TARGET SPIRV)
+                message(WARNING "glslang or SPIRV target not found! NCNN_SYSTEM_GLSLANG will be turned off.")
+                set(NCNN_SYSTEM_GLSLANG OFF)
+            endif()
+        endif()
+    endif()
+
+    if(NOT NCNN_SYSTEM_GLSLANG)
+        if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/glslang/CMakeLists.txt")
+            message(FATAL_ERROR "The submodules were not downloaded! Please update submodules with \"git submodule update --init\" and try again.")
+        else()
+            # glslang requires c++11
+            set(CMAKE_CXX_STANDARD 11)
+
+            option(BUILD_EXTERNAL "" OFF)
+            option(ENABLE_SPVREMAPPER "" OFF)
+            option(ENABLE_GLSLANG_BINARIES "" OFF)
+            option(ENABLE_HLSL "" OFF)
+            option(ENABLE_RTTI "" OFF)
+            option(ENABLE_EXCEPTIONS "" OFF)
+            option(ENABLE_OPT "" OFF)
+            option(ENABLE_PCH "" OFF)
+            option(ENABLE_CTEST "" OFF)
+            if(NCNN_SHARED_LIB)
+                option(SKIP_GLSLANG_INSTALL "" ON)
+            endif()
+            add_subdirectory(glslang)
+            if(NCNN_SHARED_LIB)
+                if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT CMAKE_CXX_COMPILER_FRONTEND_VARIANT MATCHES "MSVC"))
+                    target_compile_options(glslang PRIVATE -fvisibility=hidden -fvisibility-inlines-hidden)
+                    target_compile_options(OGLCompiler PRIVATE -fvisibility=hidden -fvisibility-inlines-hidden)
+                    target_compile_options(OSDependent PRIVATE -fvisibility=hidden -fvisibility-inlines-hidden)
+                    target_compile_options(SPIRV PRIVATE -fvisibility=hidden -fvisibility-inlines-hidden)
+                endif()
+                if(NCNN_ENABLE_LTO)
+                    set_target_properties(glslang PROPERTIES INTERPROCEDURAL_OPTIMIZATION ON)
+                    set_target_properties(OGLCompiler PROPERTIES INTERPROCEDURAL_OPTIMIZATION ON)
+                    set_target_properties(OSDependent PROPERTIES INTERPROCEDURAL_OPTIMIZATION ON)
+                    set_target_properties(SPIRV PROPERTIES INTERPROCEDURAL_OPTIMIZATION ON)
+                endif()
+            endif()
+        endif()
+    endif()
+endif()
+
+add_subdirectory(src)
+if(NCNN_BUILD_BENCHMARK)
+    add_subdirectory(benchmark)
+endif()
+if(NCNN_BUILD_EXAMPLES)
+    add_subdirectory(examples)
+endif()
+if(NCNN_BUILD_TOOLS)
+    add_subdirectory(tools)
+endif()
+if(NCNN_BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
+endif()
+if(NCNN_PYTHON)
+    add_subdirectory(python)
+endif()

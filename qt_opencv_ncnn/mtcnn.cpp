@@ -248,7 +248,7 @@ void MTCNN::PNet(float scale)
     resize_bilinear(img, in, ws, hs);
     ncnn::Extractor ex = Pnet.create_extractor();
     ex.set_light_mode(true);
-    ex.set_num_threads(4);
+//    ex.set_num_threads(2);
     ex.input("data", in);
     ncnn::Mat score_, location_;
     ex.extract("prob1", score_);
@@ -280,7 +280,7 @@ void MTCNN::PNet(){
         ncnn::Mat in;
         resize_bilinear(img, in, ws, hs);
         ncnn::Extractor ex = Pnet.create_extractor();
-        //ex.set_num_threads(2);
+//        ex.set_num_threads(2);
         ex.set_light_mode(true);
         ex.input("data", in);
         ncnn::Mat score_, location_;
@@ -302,7 +302,7 @@ void MTCNN::RNet(){
         ncnn::Mat in;
         resize_bilinear(tempIm, in, 24, 24);
         ncnn::Extractor ex = Rnet.create_extractor();
-        //ex.set_num_threads(2);
+//        ex.set_num_threads(2);
         ex.set_light_mode(true);
         ex.input("data", in);
         ncnn::Mat score, bbox;

@@ -19,7 +19,7 @@ Recognize::~Recognize() {
 
 void Recognize::RecogNet(ncnn::Mat& img_) {
     ncnn::Extractor ex = Recognet.create_extractor();
-    ex.set_num_threads(2);
+//    ex.set_num_threads(2);
     ex.set_light_mode(true);
     ex.input("data", img_);
     ncnn::Mat out;
