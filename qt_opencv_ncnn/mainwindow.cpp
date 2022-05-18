@@ -65,7 +65,7 @@ void MainWindow::on_pushButton_pressed()
         if(!video.open(ui->videoEdit->text().trimmed().toStdString()))
         {
             QMessageBox::critical(this,
-                                  "Video Error",
+                                   "Video Error",
                                   "Make sure you entered a correct and supported video file path,"
                                   "<br>or a correct RTSP feed URL!");
             return;
@@ -75,6 +75,23 @@ void MainWindow::on_pushButton_pressed()
     ui->pushButton->setText("Stop");
 
     Mat src,frame;
+
+    //初始化facenet
+    const char *model_path = "/home/zhang/Project/Qt_ncnn_opencv/qt_opencv_ncnn/models";
+    Recognize recognize(model_path);
+    sampleimg = cv::imread("/home/zhang/Project/Qt_ncnn_opencv/qt_opencv_ncnn/sample.jpg", CV_LOAD_IMAGE_COLOR);
+    recognize.start(sampleimg, samplefea);
+
+
+    //眨眼检测
+//    Mat framePro,eyeframe,dframe;
+//    bool flag = false;
+    cv::Mat eye_roi;
+    cv::Mat eye_gray;
+    cv::Rect eye;
+    double x_eye;
+    double y_eye;
+
     while(video.isOpened())
     {
         video >> frame;
@@ -83,52 +100,8 @@ void MainWindow::on_pushButton_pressed()
         if(!frame.empty())
         {
 
-            const char *model_path = "/home/zhang/Project/Qt_ncnn_opencv/qt_opencv_ncnn/models";
-//            MTCNN mtcnn(model_path);
-//            mtcnn.SetMinFace(40);
-
-//            clock_t start_time = clock();
-
-//            ncnn::Mat ncnn_img = ncnn::Mat::from_pixels(frame.data, ncnn::Mat::PIXEL_BGR2RGB, frame.cols, frame.rows);
-//            std::vector<Bbox> finalBbox;
-
-//            mtcnn.detect(ncnn_img, finalBbox);
-
-//            const int num_box = finalBbox.size();
-//            std::vector<cv::Rect> bbox;
-//            bbox.resize(num_box);
-//            for(int i = 0; i < num_box; i++){
-//                bbox[i] = cv::Rect(finalBbox[i].x1, finalBbox[i].y1, finalBbox[i].x2 - finalBbox[i].x1 + 1, finalBbox[i].y2 - finalBbox[i].y1 + 1);
-//                QString data = QString::number(finalBbox[i].score);
-//                std::cout << "score" << i << ": " ;
-//                std::cout << finalBbox[i].score << std::endl;
-//                for (int j = 0; j<5; j = j + 1)
-//                {
-//                    cv::circle(frame, cvPoint(finalBbox[i].ppoint[j], finalBbox[i].ppoint[j + 5]), 2, CV_RGB(0, 255, 0), CV_FILLED);
-//                }
-//            }
-//            for (vector<cv::Rect>::iterator it = bbox.begin(); it != bbox.end(); it++) {
-//                rectangle(frame, (*it), Scalar(0, 0, 255), 2, 8, 0);
-//            }
-//            clock_t finish_time = clock();
-//            double total_time = (double)(finish_time - start_time) / CLOCKS_PER_SEC;
-//            std::cout << "time" << total_time * 1000 << "ms" << std::endl;
-            Recognize recognize(model_path);
-
-            cv::Mat sampleimg = cv::imread("/home/zhang/Project/Qt_ncnn_opencv/qt_opencv_ncnn/sample.jpg", CV_LOAD_IMAGE_COLOR);
-
-            std::vector<float> samplefea;
-
-            clock_t start_time = clock();
-            recognize.start(sampleimg, samplefea);
-
-            clock_t finish_time = clock();
-//            double total_time = (double)(finish_time - start_time) / CLOCKS_PER_SEC;
-//            std::cout << "time" << total_time * 1000 << "ms" << std::endl;
-
             MTCNN mtcnn(model_path);
             mtcnn.SetMinFace(40);
-
 
             ncnn::Mat ncnn_img = ncnn::Mat::from_pixels(frame.data, ncnn::Mat::PIXEL_BGR2RGB, frame.cols, frame.rows);
             std::vector<Bbox> finalBbox;
@@ -138,51 +111,73 @@ void MainWindow::on_pushButton_pressed()
             std::vector<cv::Rect> bbox;
             bbox.resize(num_box);
 
-                // for(int i = 0; i < num_box; i++){
-                //     bbox[i] = cv::Rect(finalBbox[i].x1, finalBbox[i].y1, finalBbox[i].x2 - finalBbox[i].x1 + 1, finalBbox[i].y2 - finalBbox[i].y1 + 1);
 
-                //     for (int j = 0; j<5; j = j + 1)
-                //     {
-                //         cv::circle(frame, cvPoint(finalBbox[i].ppoint[j], finalBbox[i].ppoint[j + 5]), 2, CV_RGB(0, 255, 0), CV_FILLED);
-                //     }
-                // }
+            for(int i = 0; i < num_box; i++){
+                cv::Rect r = Rect(finalBbox[0].x1, finalBbox[0].y1, finalBbox[0].x2 - finalBbox[0].x1 + 1, finalBbox[0].y2 - finalBbox[0].y1 + 1);
+                cv::Mat ROI(frame, r);
+                cv::Point org;
 
-                for(int i = 0; i < num_box; i++){
-                    cv::Rect r = Rect(finalBbox[0].x1, finalBbox[0].y1, finalBbox[0].x2 - finalBbox[0].x1 + 1, finalBbox[0].y2 - finalBbox[0].y1 + 1);
-                    cv::Mat ROI(frame, r);
 
-                    cv::Mat croppedImage;
-                    std::vector<float> croppedfea;
+                cv::Mat croppedImage;
+                std::vector<float> croppedfea;
 
-                    // Copy the data into new matrix
-                    ROI.copyTo(croppedImage);
+                // Copy the data into new matrix
+                ROI.copyTo(croppedImage);
 
-                    recognize.start(croppedImage, croppedfea);
+                recognize.start(croppedImage, croppedfea);
 
-                    double similar = calculSimilar(samplefea, croppedfea);
+                if(isSample){
+                    samplefea = croppedfea;
+                    isSample = false;
+                }
 
-                     std::cout << "similarity is : " << similar << std::endl;
+                double similar = calculSimilar(samplefea, croppedfea);
 
-                    if (similar > 0.65) {
-                        rectangle(frame, r, Scalar(0, 0, 255), 2, 8, 0);
-                        ui->result->setText("是本人");
-                    } else {
-                        for (int j = 0; j<5; j = j + 1)
-                        {
-                            cv::circle(frame, cvPoint(finalBbox[i].ppoint[j], finalBbox[i].ppoint[j + 5]), 2, CV_RGB(0, 255, 0), CV_FILLED);
-                            ui->result->setText("不是本人");
-                        }
+//                std::cout << "threshold is : " << threshold << std::endl;
+                string stringsim = to_string(similar);
+                if (similar > threshold) {
+                    rectangle(frame, r, Scalar(0, 255, 0), 2, 8, 0);
+                    org.x = finalBbox[0].x1;
+                    org.y = finalBbox[0].y1;
+                    putText(frame,"Pass",org,FONT_HERSHEY_SIMPLEX,1,Scalar(0, 255, 0),2,LINE_AA);
+                    org.x = finalBbox[0].x1;
+                    org.y = finalBbox[0].y2;
+                    putText(frame,stringsim,org,FONT_HERSHEY_SIMPLEX,1,Scalar(0, 255, 0),2,LINE_AA);
+//                    ui->result->setText("是本人");
+
+//                    for (int j = 0; j<2; j = j + 1)
+//                    {
+//                        cv::circle(frame, cvPoint(finalBbox[i].ppoint[j], finalBbox[i].ppoint[j + 5]), 2, CV_RGB(0, 255, 0), CV_FILLED);
+//                        double x_eye = MAX(finalBbox[i].ppoint[j] - 16,0);
+//                        double y_eye = MAX(finalBbox[i].ppoint[j + 5] - 8,0);
+//                        cv::rectangle(frame, Rect(x_eye, y_eye,32,16), Scalar(0, 255, 0), 2, 8, 0);
+//                    }
+                    x_eye = finalBbox[i].ppoint[1] - 8;
+                    y_eye = finalBbox[i].ppoint[6] - 8;
+                    if(x_eye>0 && x_eye<640 && y_eye>0 && y_eye<480){
+                        cv::circle(frame, cvPoint(finalBbox[i].ppoint[1], finalBbox[i].ppoint[1 + 5]), 2, CV_RGB(0, 255, 0), CV_FILLED);
+                        eye = Rect(x_eye, y_eye,16,16);
+                        eye_roi = frame(eye);
+                        Scalar m = cv::mean(eye_roi);
+                        std::cout << "mean is : " << m[0] << " : "<< m[1] << " : "<< m[2] << std::endl;
+                        if(m[0] > 129)
+                            ui->result->setText("闭眼");
+                        else
+                            ui->result->setText("睁眼");
                     }
+                }
+                else {
+                    rectangle(frame, r, Scalar(0, 0, 255), 2, 8, 0);
+                    org.x = finalBbox[0].x1;
+                    org.y = finalBbox[0].y1;
+                    putText(frame,"prohibit",org,FONT_HERSHEY_SIMPLEX,1,Scalar(0, 0, 255),2,LINE_AA);
+                    ui->result->setText("不是本人");
 
                 }
-                if(num_box==0)
-                    ui->result->setText("未检测到人脸");
 
-//                imshow("face_detection", frame);
-//                clock_t finish_time = clock();
-//                double total_time = (double)(finish_time - start_time) / CLOCKS_PER_SEC;
-//                std::cout << "time" << total_time * 1000 << "ms" << std::endl;
-
+            }
+            if(num_box==0)
+                ui->result->setText("未检测到人脸");
 
 
             QImage qimg(frame.data,
@@ -199,4 +194,20 @@ void MainWindow::on_pushButton_pressed()
     ui->pushButton->setText("Start");
 }
 
+
+
+void MainWindow::on_threshold_valueChanged(int arg1)
+{
+    threshold = arg1/100.0;
+    if(threshold < 0)
+        threshold = 0;
+    if(threshold > 0.99)
+        threshold = 0.99;
+}
+
+
+void MainWindow::on_pushButton_2_clicked()
+{
+    isSample = true;
+}
 

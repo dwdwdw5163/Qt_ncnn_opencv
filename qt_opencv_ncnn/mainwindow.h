@@ -32,11 +32,20 @@ protected:
 private slots:
     void on_pushButton_pressed();
 
+    void on_threshold_valueChanged(int arg1);
+
+    void on_pushButton_2_clicked();
+
 private:
     Ui::MainWindow *ui;
 
     QGraphicsPixmapItem pixmap;
     cv::VideoCapture video;
+    double threshold = 0.65;
+    cv::Mat sampleimg;
+    bool isSample = false;
+    std::vector<float> samplefea;
+    cv::Mat eye_prev;
 };
 
 
