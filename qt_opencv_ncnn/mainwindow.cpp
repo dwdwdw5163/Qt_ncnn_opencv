@@ -113,7 +113,7 @@ void MainWindow::on_pushButton_pressed()
 
 
             for(int i = 0; i < num_box; i++){
-                cv::Rect r = Rect(finalBbox[0].x1, finalBbox[0].y1, finalBbox[0].x2 - finalBbox[0].x1 + 1, finalBbox[0].y2 - finalBbox[0].y1 + 1);
+                cv::Rect r = Rect(finalBbox[0].x1, finalBbox[0].y1,  finalBbox[0].x2 - finalBbox[0].x1, finalBbox[0].y2 - finalBbox[0].y1);
                 cv::Mat ROI(frame, r);
                 cv::Point org;
 
@@ -154,7 +154,7 @@ void MainWindow::on_pushButton_pressed()
 //                    }
                     x_eye = finalBbox[i].ppoint[1] - 8;
                     y_eye = finalBbox[i].ppoint[6] - 8;
-                    if(x_eye>0 && x_eye<640 && y_eye>0 && y_eye<480){
+                    if(x_eye>0 && x_eye<620 && y_eye>0 && y_eye<460){
                         cv::circle(frame, cvPoint(finalBbox[i].ppoint[1], finalBbox[i].ppoint[1 + 5]), 2, CV_RGB(0, 255, 0), CV_FILLED);
                         eye = Rect(x_eye, y_eye,16,16);
                         eye_roi = frame(eye);
