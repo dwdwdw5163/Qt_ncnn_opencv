@@ -1,0 +1,5 @@
+/home/lbr/projects/GitProjects/pfld-ncnn/BuildADdTest/CMakeFiles/rebuild_cache.dir
+/home/lbr/projects/GitProjects/pfld-ncnn/BuildADdTest/CMakeFiles/edit_cache.dir
+/home/lbr/projects/GitProjects/pfld-ncnn/BuildADdTest/CMakeFiles/test.dir
+/home/lbr/projects/GitProjects/pfld-ncnn/BuildADdTest/CMakeFiles/detect-video-demo.dir
+/home/lbr/projects/GitProjects/pfld-ncnn/BuildADdTest/CMakeFiles/detect-image-demo.dir

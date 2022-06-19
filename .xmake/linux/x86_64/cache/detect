@@ -1,0 +1,10 @@
+{
+    find_program = {
+        zig = false,
+        ldc2 = false,
+        gcc = "/usr/bin/gcc",
+        dmd = false,
+        gdc = false,
+        cmake = "/usr/bin/cmake"
+    }
+}
