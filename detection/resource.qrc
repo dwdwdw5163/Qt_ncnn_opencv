@@ -1,0 +1,15 @@
+<RCC>
+    <qresource prefix="/style">
+        <file>images/rect.png</file>
+        <file>images/BackGround.jpg</file>
+        <file>images/top.jpg</file>
+        <file>images/style.qss</file>
+    </qresource>
+    <qresource prefix="/icon">
+        <file>images/menu.png</file>
+        <file>images/camera_off.png</file>
+        <file>images/camera_on.png</file>
+        <file>images/warning.png</file>
+    </qresource>
+    <qresource prefix="/qss"/>
+</RCC>
