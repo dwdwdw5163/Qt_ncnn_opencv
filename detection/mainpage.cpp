@@ -7,6 +7,8 @@
 #include <QGraphicsOpacityEffect>
 
 #define SKIP_FRAMES 2
+#define X_count 80
+
 
 void draw_polyline(cv::Mat &img, const dlib::full_object_detection& d, const int start, const int end, bool isClosed = false)
 {
@@ -70,6 +72,41 @@ void MainPage::initUI()
     ui->graphicsView->setScene(new QGraphicsScene(this));
     ui->graphicsView->scene()->addItem(&pixmap);
 
+    //chart
+    QValueAxis *axisX = new QValueAxis();
+    QValueAxis *axisY = new QValueAxis();
+    QValueAxis *axisY3 = new QValueAxis;
+    axisX->setRange(0, X_count);
+    axisY->setRange(-0, 2);
+
+    chart->addSeries(series_0);
+    chart->addSeries(series_1);
+    chart->addSeries(series_2);
+    axisY3->setRange(-0, 3);
+
+    axisY3->setLinePenColor(series_1->pen().color());
+    axisY3->setGridLinePen((series_1->pen()));
+
+    chart->addAxis(axisX,Qt::AlignBottom);
+    chart->addAxis(axisY,Qt::AlignLeft);
+    chart->addAxis(axisY3, Qt::AlignRight);
+
+    series_0->attachAxis(axisX);
+    series_0->attachAxis(axisY);
+    series_1->attachAxis(axisX);
+    series_1->attachAxis(axisY3);
+    series_2->attachAxis(axisX);
+    series_2->attachAxis(axisY3);
+
+
+
+    chart->legend()->hide();
+    chart->setTitle("Mouth and eye ratio");
+
+    ui->chartview->setRenderHint(QPainter::Antialiasing);
+    ui->chartview->setChart(chart);
+    ui->chartview->show();
+
 }
 
 void MainPage::on_pushButton_pressed()
@@ -91,7 +128,7 @@ void MainPage::on_pushButton_pressed()
     Mat frame,img_small;
 
     //dlib
-    const char *landmark_model = "/home/zhang/Project/Qt_ncnn_opencv/detection/shape_predictor_68_face_landmarks.dat";
+    const char *landmark_model = "/home/zhang/Project/Qt_ncnn_opencv/shape_predictor_68_face_landmarks.dat";
     dlib::shape_predictor pose_model;
     dlib::deserialize(landmark_model) >> pose_model;
 
@@ -145,6 +182,22 @@ void MainPage::on_pushButton_pressed()
                 shapes.push_back(shape);
 
                 render_face(frame, shape);
+
+                //calculate eyes
+                double left_ratio = (shape.part(39).x() - shape.part(36).x())/2.0/(shape.part(41).y() + shape.part(40).y() - shape.part(37).y() - shape.part(38).y()+0.1f);
+                double right_ratio = (shape.part(45).x() - shape.part(42).x())/2.0/(shape.part(47).y() + shape.part(46).y() - shape.part(44).y() - shape.part(43).y()+0.1f);
+                double mouth = (shape.part(66).y() + shape.part(57).y() - shape.part(62).y() - shape.part(51).y())/((float)(shape.part(54).x() - shape.part(48).x()));
+                std::cout << "left: " << left_ratio << "right: " << right_ratio << "mouth: " << mouth << std::endl;
+
+                //chart
+                series_0->append(x_index,mouth);
+                series_1->append(x_index,left_ratio);
+                series_2->append(x_index,right_ratio);
+                qreal x = chart->plotArea().width() / X_count;
+                if(x_index > X_count)
+                    chart->scroll(x,0);
+
+                x_index++;
 
                 rectangle(frame, r, Scalar(0, 255, 0), 2, 8, 0);
 
@@ -212,5 +265,7 @@ void MainPage::resizeEvent(QResizeEvent*)
     QRect rect;
     rect = ui->videoWidget->geometry();
     ui->graphicsView->setGeometry(rect.x()-20,rect.y()-54,rect.width(),rect.height());
+    rect = ui->widget_4->geometry();
+    ui->chartview->setGeometry(rect.x()-5,rect.y()-10,rect.width(),rect.height());
 
 }

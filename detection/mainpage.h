@@ -13,8 +13,8 @@
 #include <QPixmap>
 #include <QCloseEvent>
 #include <QMessageBox>
-#include <QCamera>
-#include <QMediaPlayer>
+#include <QtCharts>
+
 
 #include "mtcnn.h"
 #include "mobilefacenet.h"
@@ -55,6 +55,13 @@ private:
     cv::Mat sampleimg;
     bool isSample = false;
     std::vector<float> samplefea;
+
+    QLineSeries *series_0 = new QLineSeries();
+    QLineSeries *series_1 = new QLineSeries();
+    QLineSeries *series_2 = new QLineSeries();
+
+    QChart *chart = new QChart();  //创建QChart实例,为图表框架,相当图画笔
+    int x_index = 0;
 };
 
 #endif // MAINPAGE_H
