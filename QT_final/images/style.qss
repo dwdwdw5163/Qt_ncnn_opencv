@@ -1,0 +1,169 @@
+/* 正常时，按钮颜色 */
+QPushButton{
+    background-color:rgb(5,126,207);
+	color: rgb(255, 255, 255);
+	border-radius: 6px;
+    border-style: outset;
+    border-color: beige;
+	    /* 内边距 */  
+ 
+}
+/* 鼠标在按钮上时，按钮颜色 */
+QPushButton:hover {
+    background-color:rgb(5,126,255);
+	border-radius: 6px;
+    color: rgb(255, 255, 255);
+  
+}
+/* 按钮被单击后，按钮颜色 */
+QPushButton:pressed {
+    background-color:rgb(5,126,207);
+    border-radius: 6px;
+    color: rgb(255, 255, 255);
+ 
+}
+
+QTabWidget::pane {
+	border: 1px;
+	background:transparent;
+}
+QTabWidget::tab-bar {
+	background:transparent;
+	subcontrol-position:center;
+}
+ 
+ /**/
+QTabBar::tab {
+	min-width:75px;
+	min-height:30px;
+	background:transparent;
+}
+ 
+QTabBar::tab:selected {
+	color: rgb(5,126,207);
+	background:transparent;
+}
+ 
+QTabBar::tab:!selected {
+	color: white;
+	background:transparent;
+}
+QTabBar::tab:hover {
+	color: rgb(5,126,207);
+	background:transparent;
+}
+
+/**/
+QLineEdit {
+	border: 1px solid #A0A0A0; /* 边框宽度为1px，颜色为#A0A0A0 */
+	border-radius: 3px; /* 边框圆角 */
+	background-color: rgb(31,35,38); /* 背景颜色 */
+	color: rgb(255,255,255); /* 文本颜色 */
+	padding:4px;  
+}
+
+/**/
+
+QTableWidget {
+	gridline-color: gray;
+    color: rgb(255, 255, 255);
+    background-color: rgba(31, 35, 38, 24);
+    selection-background-color: rgb(5,126,207); /*选中行背景颜色*/
+}
+
+QHeaderView::section{
+	background-color: rgb(108, 108, 108);
+    color: rgb(255, 255, 255);
+    padding-left: 4px;
+    border: 1px solid gray;
+    min-height: 30px;
+}
+
+QScrollBar::handle:vertical      
+{
+    background: white; 
+    border: 0px solid grey;            
+    border-radius:8px;                 
+    width: 8px;                        
+}
+
+QScrollBar::vertical                    
+{
+	background: gray; 
+    border-width:1px;                       
+    border-style: solid;                    
+    border-color: gray; 
+    width: 6px;                             
+    margin:0px 0px 0px 0px;   
+	border-radius:8px;	
+}
+
+QScrollBar::add-page:vertical,QScrollBar::sub-page:vertical{
+	background-color:transparent;
+}
+
+/**/
+QDateTimeEdit{
+	border: 1px solid #A0A0A0; /* 边框宽度为1px，颜色为#A0A0A0 */
+	border-radius: 3px; /* 边框圆角 */
+	background-color: rgb(62,67,71); /* 背景颜色 */
+	color: rgb(255,255,255); /* 文本颜色 */
+	min-height:30px;
+	font: normal bold 20px ;
+}
+/**/
+QCheckBox::indicator:unchecked{
+        image: url(:/icon/images/unchecked.png)
+}
+QCheckBox::indicator:checked {
+        image: url(:/icon/images/checked.png)
+}
+
+/*日历*/
+QCalendarWidget QHeaderView {
+    qproperty-minimumSectionSize:0;
+}
+QCalendarWidget QTableView 
+{
+    alternate-background-color:rgba(62,67,71, 1);  /* day name/week number background */
+ 	color: rgba(255,255,255,1);
+}
+QCalendarWidget QMenu{
+    background-color: rgb(62,67,71);
+}
+#qt_calendar_calendarview {
+    background-color: rgb(62,67,71);
+    font: 12px;
+}
+
+#qt_calendar_monthbutton {
+    background-color: rgb(62,67,71);
+}
+#qt_calendar_yearbutton {
+    background-color: rgb(62,67,71);
+}
+#qt_calendar_yearedit {
+    background-color: rgb(62,67,71);
+}
+#qt_calendar_navigationbar {
+    background-color: rgb(62,67,71);
+}
+QToolButton#qt_calendar_prevmonth {
+    background: transparent;
+    border: none;
+    width: 40px;
+    qproperty-icon: url(:/images/images/btnPrevMonth.png);
+}
+QToolButton#qt_calendar_nextmonth {
+    background: transparent;
+    border: none;
+    width: 40px;
+    qproperty-icon: url(:/images/images/btnNextMonth.png);
+}
+QCalendarWidget QAbstractItemView {
+    color: white;
+}
+
+QCalendarWidget QWidget {
+    color: white;
+}
