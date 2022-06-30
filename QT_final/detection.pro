@@ -31,6 +31,7 @@ SOURCES += \
 
 HEADERS += \
     dataanalysis.h \
+    dataio.h \
     dlib/queue.h \
     faceinput.h \
     helpwidget.h \

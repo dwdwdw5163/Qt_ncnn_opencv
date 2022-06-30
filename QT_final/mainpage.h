@@ -4,7 +4,7 @@
 #include <QWidget>
 #include <QFrame>
 
-#include <QVideoWidget>
+//#include <QVideoWidget>as
 
 #include <QMainWindow>
 #include <QDebug>
@@ -26,6 +26,8 @@
 #include <dlib/image_processing.h>
 //#include <dlib/gui_widgets.h>
 #include <dlib/opencv.h>
+
+
 
 namespace Ui {
 class MainPage;
@@ -50,7 +52,6 @@ private:
     Ui::MainPage *ui;
     WarningWidget *warning;
 
-
     cv::VideoCapture video;
     QGraphicsPixmapItem pixmap;
     double threshold = 0.65;
@@ -58,11 +59,11 @@ private:
     bool isSample = false;
     std::vector<float> samplefea;
 
-    QLineSeries *series_0 = new QLineSeries();
-    QLineSeries *series_1 = new QLineSeries();
-    QLineSeries *series_2 = new QLineSeries();
+//    QLineSeries *series_0 = new QLineSeries();
+//    QLineSeries *series_1 = new QLineSeries();
+//    QLineSeries *series_2 = new QLineSeries();
 
-    QChart *chart = new QChart();  //创建QChart实例,为图表框架,相当图画笔
+//    QChart *chart = new QChart();  //创建QChart实例,为图表框架,相当图画笔
     int x_index = 0;
 };
 

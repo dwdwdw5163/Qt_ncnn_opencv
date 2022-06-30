@@ -412,7 +412,7 @@ namespace dlib
 
         struct task_state_type
         {
-            task_state_type() : is_being_processed(false), task_id(0), next_task_id(2), arg1(0), arg2(0), eptr(nullptr) {}
+            task_state_type() : is_being_processed(false), task_id(0), next_task_id(2), arg1(0), arg2(0) {}
 
             bool is_ready () const 
             /*!
@@ -453,16 +453,16 @@ namespace dlib
             bfp_type bfp;
 
             std::shared_ptr<function_object_copy> function_copy;
-            mutable std::exception_ptr eptr; // non-null if the task threw an exception
+            // mutable std::exception_ptr eptr; // non-null if the task threw an exception
 
             void propagate_exception() const
             {
-                if (eptr)
-                {
-                    auto tmp = eptr;
-                    eptr = nullptr;
-                    std::rethrow_exception(tmp);
-                }
+                // if (eptr)
+                // {
+                //     auto tmp = eptr;
+                //     eptr = nullptr;
+                //     std::rethrow_exception(tmp);
+                // }
             }
 
         };

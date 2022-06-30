@@ -183,9 +183,6 @@
           </property>
          </widget>
         </item>
-        <item>
-         <widget class="QChartView" name="chartview"/>
-        </item>
        </layout>
       </widget>
      </item>
@@ -193,13 +190,6 @@
    </item>
   </layout>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>QChartView</class>
-   <extends>QGraphicsView</extends>
-   <header>QtCharts</header>
-  </customwidget>
- </customwidgets>
  <resources>
   <include location="resource.qrc"/>
  </resources>

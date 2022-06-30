@@ -80,40 +80,40 @@ void MainPage::initUI()
     ui->graphicsView->setScene(new QGraphicsScene(this));
     ui->graphicsView->scene()->addItem(&pixmap);
 
-    //chart
-    QValueAxis *axisX = new QValueAxis();
-    QValueAxis *axisY = new QValueAxis();
-    QValueAxis *axisY3 = new QValueAxis;
-    axisX->setRange(0, X_count);
-    axisY->setRange(-0, 1.5);
+//    //chart
+//    QValueAxis *axisX = new QValueAxis();
+//    QValueAxis *axisY = new QValueAxis();
+//    QValueAxis *axisY3 = new QValueAxis;
+//    axisX->setRange(0, X_count);
+//    axisY->setRange(-0, 1.5);
 
-    chart->addSeries(series_0);
-    chart->addSeries(series_1);
-    chart->addSeries(series_2);
-    axisY3->setRange(-0, 1);
+//    chart->addSeries(series_0);
+//    chart->addSeries(series_1);
+//    chart->addSeries(series_2);
+//    axisY3->setRange(-0, 1);
 
-    axisY3->setLinePenColor(series_1->pen().color());
-    axisY3->setGridLinePen((series_1->pen()));
+//    axisY3->setLinePenColor(series_1->pen().color());
+//    axisY3->setGridLinePen((series_1->pen()));
 
-    chart->addAxis(axisX,Qt::AlignBottom);
-    chart->addAxis(axisY,Qt::AlignLeft);
-    chart->addAxis(axisY3, Qt::AlignRight);
+//    chart->addAxis(axisX,Qt::AlignBottom);
+//    chart->addAxis(axisY,Qt::AlignLeft);
+//    chart->addAxis(axisY3, Qt::AlignRight);
 
-    series_0->attachAxis(axisX);
-    series_0->attachAxis(axisY);
-    series_1->attachAxis(axisX);
-    series_1->attachAxis(axisY3);
-    series_2->attachAxis(axisX);
-    series_2->attachAxis(axisY3);
+//    series_0->attachAxis(axisX);
+//    series_0->attachAxis(axisY);
+//    series_1->attachAxis(axisX);
+//    series_1->attachAxis(axisY3);
+//    series_2->attachAxis(axisX);
+//    series_2->attachAxis(axisY3);
 
 
 
-    chart->legend()->hide();
-    chart->setTitle("Mouth and eye ratio");
+//    chart->legend()->hide();
+//    chart->setTitle("Mouth and eye ratio");
 
-    ui->chartview->setRenderHint(QPainter::Antialiasing);
-    ui->chartview->setChart(chart);
-    ui->chartview->show();
+//    ui->chartview->setRenderHint(QPainter::Antialiasing);
+//    ui->chartview->setChart(chart);
+//    ui->chartview->show();
 
 
 }
@@ -141,7 +141,7 @@ void MainPage::on_pushButton_pressed()
     dlib::shape_predictor pose_model;
     dlib::deserialize(landmark_model) >> pose_model;
 
-    //初始化model & facenet
+    //初始化mtcnn
     const char *model_path = "/home/zhang/Project/Qt_ncnn_opencv/detection/models";
     Recognize recognize(model_path);
     sampleimg = cv::imread("/home/zhang/Project/Qt_ncnn_opencv/detection/sample.jpg", CV_LOAD_IMAGE_COLOR);
@@ -194,12 +194,12 @@ void MainPage::on_pushButton_pressed()
                 std::cout << "left: " << left_ratio << "right: " << right_ratio << "mouth: " << mouth << std::endl;
 
                 //chart
-                series_0->append(x_index,mouth);
-                series_1->append(x_index,left_ratio - 0.5);
-                series_2->append(x_index,right_ratio - 0.5);
-                qreal x = chart->plotArea().width() / X_count;
-                if(x_index > X_count)
-                    chart->scroll(x,0);
+//                series_0->append(x_index,mouth);
+//                series_1->append(x_index,left_ratio - 0.5);
+//                series_2->append(x_index,right_ratio - 0.5);
+//                qreal x = chart->plotArea().width() / X_count;
+//                if(x_index > X_count)
+//                    chart->scroll(x,0);
 
                 x_index++;
 

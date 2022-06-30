@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
     //全局字体加粗
     QFont font  = a.font();
     font.setPointSize(14);
-    font.setWeight(50);
+    font.setWeight(QFont::Weight::Thin);
     font.setFamily("Microsoft YaHei");
     a.setFont(font);
 

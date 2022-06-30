@@ -192,7 +192,7 @@ namespace dlib
                 task = tasks[idx];
             }
 
-            std::exception_ptr eptr = nullptr;
+            // std::exception_ptr eptr = nullptr;
             try
             {
                 // now do the task
@@ -207,7 +207,7 @@ namespace dlib
             }
             catch(...)
             {
-                eptr = std::current_exception();
+                // eptr = std::current_exception();
             }
 
             // Now let others know that we finished the task.  We do this
@@ -221,7 +221,7 @@ namespace dlib
                 tasks[idx].mfp2.clear();
                 tasks[idx].arg1 = 0;
                 tasks[idx].arg2 = 0;
-                tasks[idx].eptr = eptr;
+                // tasks[idx].eptr = eptr;
                 task_done_signaler.broadcast();
             }
 
