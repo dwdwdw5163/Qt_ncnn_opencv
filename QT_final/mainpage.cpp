@@ -79,6 +79,9 @@ void MainPage::initUI()
     ui->graphicsView->setScene(new QGraphicsScene(this));
     ui->graphicsView->scene()->addItem(&pixmap);
 
+    QString dbpath = "/home/zhang/Project/Qt_ncnn_opencv/QT_final/database/workers.db";
+    db = new sql(dbpath);
+
 }
 
 void MainPage::on_pushButton_pressed()
@@ -90,7 +93,7 @@ void MainPage::on_pushButton_pressed()
         return;
     }
 
-    if(!video.open(0)){
+    if(!video.open(2)){
         QMessageBox::critical(this,"Camera Error",
             "Make sure you entered a correct camera index,"
             "<br>or that the camera is not being accessed by another program!");
@@ -112,7 +115,6 @@ void MainPage::on_pushButton_pressed()
 
 
 
-    int count = 0;
     std::vector<dlib::rectangle> faces;
 
     while(video.isOpened())
@@ -135,6 +137,21 @@ void MainPage::on_pushButton_pressed()
 
             for(int i = 0; i < num_box; i++){
                 cv::Rect r = Rect(finalBbox[0].x1, finalBbox[0].y1,  finalBbox[0].x2 - finalBbox[0].x1, finalBbox[0].y2 - finalBbox[0].y1);
+                cv::Mat ROI(frame, r);
+                cv::Mat croppedImage;
+                std::vector<float> croppedfea;
+                cv::Point org;
+
+                rectangle(frame, r, Scalar(0, 0, 255), 2, 8, 0);
+
+                // Copy the data into new matrix
+                ROI.copyTo(croppedImage);
+
+                recognize.start(croppedImage, croppedfea);
+
+                double similar = db->queryPerson(croppedfea);
+
+                qDebug() << similar;
 
                 dlib::rectangle R(  (long)(finalBbox[0].x1),
                                     (long)(finalBbox[0].y1),
@@ -156,15 +173,7 @@ void MainPage::on_pushButton_pressed()
                 double mouth = (shape.part(66).y() + shape.part(57).y() - shape.part(62).y() - shape.part(51).y())/((float)(shape.part(54).x() - shape.part(48).x()));
                 std::cout << "left: " << left_ratio << "right: " << right_ratio << "mouth: " << mouth << std::endl;
 
-                //chart
-//                series_0->append(x_index,mouth);
-//                series_1->append(x_index,left_ratio - 0.5);
-//                series_2->append(x_index,right_ratio - 0.5);
-//                qreal x = chart->plotArea().width() / X_count;
-//                if(x_index > X_count)
-//                    chart->scroll(x,0);
 
-                x_index++;
 
                 rectangle(frame, r, Scalar(0, 255, 0), 2, 8, 0);
 

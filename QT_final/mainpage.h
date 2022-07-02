@@ -22,7 +22,7 @@
 #include <dlib/image_processing.h>
 #include <dlib/opencv.h>
 
-
+#include "sql.h"
 
 namespace Ui {
 class MainPage;
@@ -54,7 +54,7 @@ private:
     bool isSample = false;
     std::vector<float> samplefea;
 
-    int x_index = 0;
+    sql *db;
 };
 
 #endif // MAINPAGE_H

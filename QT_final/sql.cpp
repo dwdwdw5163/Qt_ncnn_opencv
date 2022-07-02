@@ -1,5 +1,11 @@
 #include "sql.h"
 
+#include "mobilefacenet.h"
+
+
+#define FEATURE_SIZE 128
+
+
 sql::sql(const QString &DatabaseName)
 {
 
@@ -21,10 +27,17 @@ bool sql::addPerson(int &id,QString& name,int &age,std::vector<float> &feature)
 {
     bool success = false;
     qDebug() << feature.size();
+
+//    QByteArray data;
+//    QDataStream stream(&data, QIODevice::WriteOnly);
+//    for (auto x : feature)
+//        stream << x;
+
+
+
     QByteArray data;
-    QDataStream stream(&data, QIODevice::WriteOnly);
-    for (auto x : feature)
-        stream << x;
+    data.resize(FEATURE_SIZE*4);
+    memcpy(data.data(), &feature[0], FEATURE_SIZE*4);
 
     QSqlQuery query;
     if( !query.exec( "SELECT MAX(ID) FROM WORKERS" ))
@@ -51,16 +64,50 @@ bool sql::addPerson(int &id,QString& name,int &age,std::vector<float> &feature)
     }
 
 
+//    if( !query.exec( "SELECT FEATURE FROM WORKERS WHERE ID = (SELECT MAX(ID) FROM WORKERS)" ))
+//        qDebug() << "Error getting FEATURE from table:\n" << query.lastError();
+//    query.first();
+//    QByteArray outByteArray = query.value( 0 ).toByteArray();
+//    qDebug() << outByteArray.size();
+
+//    float outfloat[FEATURE_SIZE];
+//    memcpy(&outfloat[0], outByteArray.data(), FEATURE_SIZE*4);
+//    std::vector<float> tempFeature;
+//    for(int i=0;i<FEATURE_SIZE;i++){
+//        tempFeature.push_back(outfloat[i]);
+//    }
+
+//    qDebug() << tempFeature.size();
+
+//    double similarity = calculSimilar(feature,tempFeature);
+//    qDebug() << similarity;
+
+//    qDebug() << feature[0] <<" : "<< tempFeature[0];
+//    qDebug() << (outByteArray.at(0)-data.at(0));
     return success;
 }
 
-void sql::queryPerson(int &id,QString& name,int &age,std::vector<float> &feature)
+double sql::queryPerson(std::vector<float> &feature)
 {
     QSqlQuery query;
-    if( !query.exec( "SELECT FEATURE from WORKERS" ))
+    if( !query.exec( "SELECT FEATURE FROM WORKERS WHERE ID = (SELECT MAX(ID) FROM WORKERS)" ))
         qDebug() << "Error getting FEATURE from table:\n" << query.lastError();
     query.first();
     QByteArray outByteArray = query.value( 0 ).toByteArray();
     qDebug() << outByteArray.size();
+
+    float outfloat[FEATURE_SIZE];
+    memcpy(&outfloat[0], outByteArray.data(), FEATURE_SIZE*4);
+    std::vector<float> tempFeature;
+    for(int i=0;i<FEATURE_SIZE;i++){
+        tempFeature.push_back(outfloat[i]);
+    }
+
+    qDebug() << tempFeature.size();
+
+    double similarity = calculSimilar(feature,tempFeature);
+
+
+    return similarity;
 
 }

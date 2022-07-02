@@ -29,8 +29,8 @@ FaceInput::FaceInput(QWidget *parent) :
 //    widget->show();
     widget->setHidden(true);
 
-    QString dbpath = "/home/zhang/Project/Qt_ncnn_opencv/QT_final/database/workers.db";
-    db = new sql(dbpath);
+//    QString dbpath = "/home/zhang/Project/Qt_ncnn_opencv/QT_final/database/workers.db";
+//    db = new sql(dbpath);
 }
 
 FaceInput::~FaceInput()
