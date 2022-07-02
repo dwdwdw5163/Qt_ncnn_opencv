@@ -1,4 +1,4 @@
-QT       += core gui multimediawidgets charts
+QT       += core gui multimediawidgets sql
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 #define nullptr NULL
 CONFIG += c++11
@@ -27,11 +27,11 @@ SOURCES += \
     modifyuserinfo.cpp \
     mtcnn.cpp \
     pagemenu.cpp \
+    sql.cpp \
     warningwidget.cpp
 
 HEADERS += \
     dataanalysis.h \
-    dataio.h \
     dlib/queue.h \
     faceinput.h \
     helpwidget.h \
@@ -42,6 +42,7 @@ HEADERS += \
     modifyuserinfo.h \
     mtcnn.h \
     pagemenu.h \
+    sql.h \
     warningwidget.h
 
 FORMS += \
@@ -81,7 +82,7 @@ LIBS += $${usrLocLib}/libopencv_highgui.so \
     $${usrLocLib}/libopencv_objdetect.so \
     $${usrLocLib}/libopencv_photo.so \
     $${usrLocLib}/libopencv_stitching.so \
-    /home/zhang/Project/Qt_ncnn_opencv/detection/ncnn/build/install/lib/libncnn.a \
+    //home/zhang/Project/Qt_ncnn_opencv/QT_final/ncnn/build/install/lib/libncnn.a \
 
 
 INCLUDEPATH += /usr/local/include/opencv

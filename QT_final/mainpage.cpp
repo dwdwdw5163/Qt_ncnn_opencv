@@ -74,47 +74,10 @@ void MainPage::initUI()
     //警告框使用
     warning = new WarningWidget(this);
     warning->setGeometry(529, 320, 901, 307);
-//    warning->setWindowFlags(warning->windowFlags()|Qt::WindowStaysOnTopHint);
     warning->setHidden(true);
 
     ui->graphicsView->setScene(new QGraphicsScene(this));
     ui->graphicsView->scene()->addItem(&pixmap);
-
-//    //chart
-//    QValueAxis *axisX = new QValueAxis();
-//    QValueAxis *axisY = new QValueAxis();
-//    QValueAxis *axisY3 = new QValueAxis;
-//    axisX->setRange(0, X_count);
-//    axisY->setRange(-0, 1.5);
-
-//    chart->addSeries(series_0);
-//    chart->addSeries(series_1);
-//    chart->addSeries(series_2);
-//    axisY3->setRange(-0, 1);
-
-//    axisY3->setLinePenColor(series_1->pen().color());
-//    axisY3->setGridLinePen((series_1->pen()));
-
-//    chart->addAxis(axisX,Qt::AlignBottom);
-//    chart->addAxis(axisY,Qt::AlignLeft);
-//    chart->addAxis(axisY3, Qt::AlignRight);
-
-//    series_0->attachAxis(axisX);
-//    series_0->attachAxis(axisY);
-//    series_1->attachAxis(axisX);
-//    series_1->attachAxis(axisY3);
-//    series_2->attachAxis(axisX);
-//    series_2->attachAxis(axisY3);
-
-
-
-//    chart->legend()->hide();
-//    chart->setTitle("Mouth and eye ratio");
-
-//    ui->chartview->setRenderHint(QPainter::Antialiasing);
-//    ui->chartview->setChart(chart);
-//    ui->chartview->show();
-
 
 }
 

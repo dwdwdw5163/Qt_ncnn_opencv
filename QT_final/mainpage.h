@@ -4,8 +4,6 @@
 #include <QWidget>
 #include <QFrame>
 
-//#include <QVideoWidget>as
-
 #include <QMainWindow>
 #include <QDebug>
 #include <QGraphicsScene>
@@ -14,17 +12,14 @@
 #include <QPixmap>
 #include <QCloseEvent>
 #include <QMessageBox>
-#include <QtCharts>
 
 #include "mtcnn.h"
 #include "mobilefacenet.h"
 #include "warningwidget.h"
 
 #include <opencv2/core.hpp>
-#include <dlib/image_processing/frontal_face_detector.h>
 #include <dlib/image_processing/render_face_detections.h>
 #include <dlib/image_processing.h>
-//#include <dlib/gui_widgets.h>
 #include <dlib/opencv.h>
 
 
@@ -59,11 +54,6 @@ private:
     bool isSample = false;
     std::vector<float> samplefea;
 
-//    QLineSeries *series_0 = new QLineSeries();
-//    QLineSeries *series_1 = new QLineSeries();
-//    QLineSeries *series_2 = new QLineSeries();
-
-//    QChart *chart = new QChart();  //创建QChart实例,为图表框架,相当图画笔
     int x_index = 0;
 };
 

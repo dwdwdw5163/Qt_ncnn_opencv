@@ -12,7 +12,6 @@
 #include <QPixmap>
 #include <QCloseEvent>
 #include <QMessageBox>
-#include <QtCharts>
 
 #include "mtcnn.h"
 #include "mobilefacenet.h"
@@ -20,7 +19,8 @@
 
 #include <opencv2/core.hpp>
 #include "modifyuserinfo.h"
-#include "dataio.h"
+
+#include "sql.h"
 
 namespace Ui {
 class FaceInput;
@@ -48,9 +48,8 @@ private:
     bool isSample = false;
     int index = 0;
 
-
-    QVector<worker_t> workers;
     QGraphicsPixmapItem pixmap;
+    sql *db;
 
 };
 

@@ -1,36 +1,6 @@
 ﻿#include "faceinput.h"
 #include "ui_faceinput.h"
 
-QDataStream &operator<<(QDataStream &out, const worker_t &worker)
-{
-    out << (qint32)worker.id << worker.name
-        << (qint32)worker.age;
-    for(int i=0;i<FEATURE_SIZE;i++){
-        out << (float)worker.feature[i];
-    }
-    return out;
-}
-
-QDataStream &operator>>(QDataStream &in, worker_t &worker)
-{
-    qint32 id,age;
-    QString name;
-    float fea;
-
-    for(int i=FEATURE_SIZE-1;i>=0;i--){
-        in >> fea;
-        worker.feature[i] = fea;
-    }
-    in >> age;
-    in >> name;
-    in >> id;
-
-    worker.age = age;
-    worker.name = name;
-    worker.id = id;
-
-    return in;
-}
 
 FaceInput::FaceInput(QWidget *parent) :
     QWidget(parent),
@@ -58,6 +28,9 @@ FaceInput::FaceInput(QWidget *parent) :
     widget->setGeometry(702, 200, 514, 421);
 //    widget->show();
     widget->setHidden(true);
+
+    QString dbpath = "/home/zhang/Project/Qt_ncnn_opencv/QT_final/database/workers.db";
+    db = new sql(dbpath);
 }
 
 FaceInput::~FaceInput()
@@ -76,7 +49,7 @@ void FaceInput::on_pushButton_pressed()
         return;
     }
 
-    if(!video.open(0)){
+    if(!video.open(2)){
         QMessageBox::critical(this,"Camera Error",
             "Make sure you entered a correct camera index,"
             "<br>or that the camera is not being accessed by another program!");
@@ -122,63 +95,16 @@ void FaceInput::on_pushButton_pressed()
                 ROI.copyTo(croppedImage);
 
                 recognize.start(croppedImage, croppedfea);
-                if(isSample){
+                if(isSample && db->isConnected){
                     isSample = false;
                     index++;
-                    qint32 fea[128];
-                    for(int i=0;i<FEATURE_SIZE;i++){
-                        fea[i] = *(qint32 *)&croppedfea[i];
-                    }
-                    worker_t worker = {(qint32)index,QString::fromStdString("test"),18,{0}};
-                    worker_t readwork;
-
-                    QFile datafile("/home/zhang/Project/Qt_ncnn_opencv/QT_final/data/file.dat");
-                    datafile.open(QIODevice::ReadWrite);
-                    QDataStream out(&datafile);   // we will serialize the data into the file
-                    out.device()->setTextModeEnabled(false);
-                    out << (qint32)index << worker.name
-                        << (qint32)worker.age;
-//                    for(int i=0;i<FEATURE_SIZE;i++){
-//                        out << fea[i];
-//                    }
-//                    datafile.close();
-//                    QFile datafile("/home/zhang/Project/Qt_ncnn_opencv/QT_final/data/file.dat");
-//                    datafile.open(QIODevice::ReadOnly);
-                    QDataStream in(&datafile);    // read the data serialized from the file
-                    qint32 id,age;
-                    QString name;
-                    qint32 feat;
-
-//                    for(int i=FEATURE_SIZE-1;i>=0;i--){
-//                        in >> feat;
-//                        readwork.feature[i] = *(float *)&feat;
-//                    }
-
-                    in >> age;
-                    in >> name;
-                    in >> id;
-
-                    readwork.age = age;
-                    readwork.name = name;
-                    readwork.id = id;
-
-                    qDebug() << readwork.id << readwork.name << readwork.age<< "readonce";
-
-
-                    datafile.close();
+                    QString name = "test";
+                    int age = 18;
+                    db->addPerson(index,name,age,croppedfea);
 
                 }
-//                float score = finalBbox[i].score;
-//                string stringsim = to_string(score);
-//                std::cout << score << std::endl;
-//                org.x = finalBbox[0].x1;
-//                org.y = finalBbox[0].y1;
-//                putText(frame,stringsim,org,FONT_HERSHEY_SIMPLEX,1,Scalar(0, 255, 0),2,LINE_AA);
-
-
 
             }
-
 
             if(num_box<=0){
                 ui->pushButton_2->setDisabled(true);
