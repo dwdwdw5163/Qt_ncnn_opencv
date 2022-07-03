@@ -24,6 +24,17 @@
 
 #include "sql.h"
 
+#include <QtCharts>
+
+//FSM
+enum{
+    RECOGNIZE,
+    DETECTION
+};
+
+
+
+
 namespace Ui {
 class MainPage;
 }
@@ -55,6 +66,23 @@ private:
     std::vector<float> samplefea;
 
     sql *db;
+
+
+    int state;
+
+    std::vector<double> eye_blink;
+    int num_blink = 0;
+
+    int noFace_count = 0;
+
+
+    QLineSeries *series_0 = new QLineSeries();
+    QLineSeries *series_1 = new QLineSeries();
+    QLineSeries *series_2 = new QLineSeries();
+
+    QChart *chart = new QChart();  //创建QChart实例,为图表框架,相当图画笔
+    int x_index = 0;
+
 };
 
 #endif // MAINPAGE_H

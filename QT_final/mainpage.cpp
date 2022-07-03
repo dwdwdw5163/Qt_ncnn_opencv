@@ -82,6 +82,44 @@ void MainPage::initUI()
     QString dbpath = "/home/zhang/Project/Qt_ncnn_opencv/QT_final/database/workers.db";
     db = new sql(dbpath);
 
+    state = RECOGNIZE;
+
+
+    //chart
+    QValueAxis *axisX = new QValueAxis();
+    QValueAxis *axisY = new QValueAxis();
+    QValueAxis *axisY3 = new QValueAxis;
+    axisX->setRange(0, X_count);
+    axisY->setRange(-0, 1.5);
+
+    chart->addSeries(series_0);
+    chart->addSeries(series_1);
+    chart->addSeries(series_2);
+    axisY3->setRange(-0, 1);
+
+    axisY3->setLinePenColor(series_1->pen().color());
+    axisY3->setGridLinePen((series_1->pen()));
+
+    chart->addAxis(axisX,Qt::AlignBottom);
+    chart->addAxis(axisY,Qt::AlignLeft);
+    chart->addAxis(axisY3, Qt::AlignRight);
+
+    series_0->attachAxis(axisX);
+    series_0->attachAxis(axisY);
+    series_1->attachAxis(axisX);
+    series_1->attachAxis(axisY3);
+    series_2->attachAxis(axisX);
+    series_2->attachAxis(axisY3);
+
+
+
+    chart->legend()->hide();
+    chart->setTitle("Mouth and eye ratio");
+
+    ui->chartview->setRenderHint(QPainter::Antialiasing);
+    ui->chartview->setChart(chart);
+    ui->chartview->show();
+
 }
 
 void MainPage::on_pushButton_pressed()
@@ -93,7 +131,7 @@ void MainPage::on_pushButton_pressed()
         return;
     }
 
-    if(!video.open(2)){
+    if(!video.open(0)){
         QMessageBox::critical(this,"Camera Error",
             "Make sure you entered a correct camera index,"
             "<br>or that the camera is not being accessed by another program!");
@@ -142,16 +180,24 @@ void MainPage::on_pushButton_pressed()
                 std::vector<float> croppedfea;
                 cv::Point org;
 
-                rectangle(frame, r, Scalar(0, 0, 255), 2, 8, 0);
+                if(state == RECOGNIZE)
+                    rectangle(frame, r, Scalar(0, 0, 255), 2, 8, 0);
 
-                // Copy the data into new matrix
-                ROI.copyTo(croppedImage);
+                if( db->maxID() > 0 && state==RECOGNIZE ){
 
-                recognize.start(croppedImage, croppedfea);
+                    // Copy the data into new matrix
+                    ROI.copyTo(croppedImage);
 
-                double similar = db->queryPerson(croppedfea);
+                    recognize.start(croppedImage, croppedfea);
+                    double similar;
+                    int id;
+                    similar = db->queryPerson(croppedfea,id);
+//                    qDebug() << "id: " << id << "similarity: " << similar;
 
-                qDebug() << similar;
+                    QString text = QStringLiteral("ID: %1 similarity: %2 ").arg(id).arg(similar);
+                    putText(frame,text.toStdString(),cv::Point(finalBbox[0].x1, finalBbox[0].y1),FONT_HERSHEY_COMPLEX,1,Scalar(0,0,255),4);
+                }
+
 
                 dlib::rectangle R(  (long)(finalBbox[0].x1),
                                     (long)(finalBbox[0].y1),
@@ -165,20 +211,34 @@ void MainPage::on_pushButton_pressed()
                 dlib::full_object_detection shape = pose_model(dimg,R);
                 shapes.push_back(shape);
 
-                render_face(frame, shape);
+                if(state == DETECTION)
+                    render_face(frame, shape);
 
                 //calculate eyes
                 double left_ratio = (shape.part(39).x() - shape.part(36).x())/2.0/(shape.part(41).y() + shape.part(40).y() - shape.part(37).y() - shape.part(38).y()+0.1f);
                 double right_ratio = (shape.part(45).x() - shape.part(42).x())/2.0/(shape.part(47).y() + shape.part(46).y() - shape.part(44).y() - shape.part(43).y()+0.1f);
                 double mouth = (shape.part(66).y() + shape.part(57).y() - shape.part(62).y() - shape.part(51).y())/((float)(shape.part(54).x() - shape.part(48).x()));
-                std::cout << "left: " << left_ratio << "right: " << right_ratio << "mouth: " << mouth << std::endl;
+//                std::cout << "left: " << left_ratio << "right: " << right_ratio << "mouth: " << mouth << std::endl;
 
+                eye_blink.push_back(left_ratio+right_ratio-1.3);
+                if(eye_blink.size()>3)
+                    eye_blink.erase(eye_blink.begin());
 
+                if(eye_blink.front() < 0 && eye_blink.back()>0 ){
+                    num_blink++;
+                    qDebug() << "num blink" << num_blink;
+                }
+                //chart
+                series_0->append(x_index,mouth);
+                series_1->append(x_index,left_ratio - 0.5);
+                series_2->append(x_index,right_ratio - 0.5);
+                qreal x = chart->plotArea().width() / X_count;
+                if(x_index > X_count)
+                    chart->scroll(x,0);
 
-                rectangle(frame, r, Scalar(0, 255, 0), 2, 8, 0);
+                x_index++;
 
-
-                if(mouth>0.7){
+                if(mouth>0.65){
                     warning->setHidden(false);
                 }
                 else{
@@ -186,11 +246,27 @@ void MainPage::on_pushButton_pressed()
                 }
 
 
-            }
-            if(num_box==0){
+                if(state == RECOGNIZE && num_blink > 8){
+                    num_blink = 0;
+                    state = DETECTION;
+                }
+
+
+                noFace_count = 0;
 
             }
-            // Resize image for face detection
+            if(num_box==0){
+                noFace_count++;
+                qDebug() << "noFace_count: " << noFace_count;
+                if(noFace_count > 100 && state == DETECTION){
+                    noFace_count = 0;
+                    state = RECOGNIZE;
+                    num_blink = 0;
+                }
+            }
+
+
+
 
 
 

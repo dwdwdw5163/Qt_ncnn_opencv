@@ -225,7 +225,7 @@
   <customwidget>
    <class>MainPage</class>
    <extends>QWidget</extends>
-   <header>mainpage.h</header>
+   <header location="global">mainpage.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
@@ -249,7 +249,7 @@
   <customwidget>
    <class>DataAnalysis</class>
    <extends>QWidget</extends>
-   <header location="global">dataanalysis.h</header>
+   <header>dataanalysis.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

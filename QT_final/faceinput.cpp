@@ -29,8 +29,11 @@ FaceInput::FaceInput(QWidget *parent) :
 //    widget->show();
     widget->setHidden(true);
 
-//    QString dbpath = "/home/zhang/Project/Qt_ncnn_opencv/QT_final/database/workers.db";
-//    db = new sql(dbpath);
+    QString dbpath = "/home/zhang/Project/Qt_ncnn_opencv/QT_final/database/workers.db";
+    db = new sql(dbpath);
+
+    QString NumofWorkers = QStringLiteral("%1 人 ").arg(db->maxID());
+    ui->label_4->setText(NumofWorkers);
 }
 
 FaceInput::~FaceInput()
@@ -49,7 +52,7 @@ void FaceInput::on_pushButton_pressed()
         return;
     }
 
-    if(!video.open(2)){
+    if(!video.open(0)){
         QMessageBox::critical(this,"Camera Error",
             "Make sure you entered a correct camera index,"
             "<br>or that the camera is not being accessed by another program!");
@@ -95,13 +98,16 @@ void FaceInput::on_pushButton_pressed()
                 ROI.copyTo(croppedImage);
 
                 recognize.start(croppedImage, croppedfea);
+
+                //add
                 if(isSample && db->isConnected){
                     isSample = false;
                     index++;
                     QString name = "test";
                     int age = 18;
                     db->addPerson(index,name,age,croppedfea);
-
+                    QString NumofWorkers = QStringLiteral("%1 人 ").arg(db->maxID());
+                    ui->label_4->setText(NumofWorkers);
                 }
 
             }
@@ -137,5 +143,16 @@ void FaceInput::on_pushButton_2_clicked()
 {
     isSample = true;
 
+}
+
+
+void FaceInput::on_pushButton_3_clicked()
+{
+    //reset database
+    QSqlQuery query;
+    if( !query.exec( "DELETE FROM WORKERS" ))
+        qDebug() << "Error DELETE FROM WORKERS\n" << query.lastError();
+    QString NumofWorkers = QStringLiteral("%1 人 ").arg(db->maxID());
+    ui->label_4->setText(NumofWorkers);
 }
 

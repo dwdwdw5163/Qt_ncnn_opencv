@@ -8,9 +8,14 @@
 
 sql::sql(const QString &DatabaseName)
 {
+    if (QSqlDatabase::contains("qt_sql_default_connection")){
+        database = QSqlDatabase::database("qt_sql_default_connection");
+    }
+    else{
+        database = QSqlDatabase::addDatabase("QSQLITE");
+        database.setDatabaseName(DatabaseName);
+    }
 
-    QSqlDatabase database = QSqlDatabase::addDatabase("QSQLITE");
-    database.setDatabaseName(DatabaseName);
 
 
     if (!database.open()) {
@@ -63,51 +68,58 @@ bool sql::addPerson(int &id,QString& name,int &age,std::vector<float> &feature)
                  << query.lastError();
     }
 
-
-//    if( !query.exec( "SELECT FEATURE FROM WORKERS WHERE ID = (SELECT MAX(ID) FROM WORKERS)" ))
-//        qDebug() << "Error getting FEATURE from table:\n" << query.lastError();
-//    query.first();
-//    QByteArray outByteArray = query.value( 0 ).toByteArray();
-//    qDebug() << outByteArray.size();
-
-//    float outfloat[FEATURE_SIZE];
-//    memcpy(&outfloat[0], outByteArray.data(), FEATURE_SIZE*4);
-//    std::vector<float> tempFeature;
-//    for(int i=0;i<FEATURE_SIZE;i++){
-//        tempFeature.push_back(outfloat[i]);
-//    }
-
-//    qDebug() << tempFeature.size();
-
-//    double similarity = calculSimilar(feature,tempFeature);
-//    qDebug() << similarity;
-
-//    qDebug() << feature[0] <<" : "<< tempFeature[0];
-//    qDebug() << (outByteArray.at(0)-data.at(0));
     return success;
 }
 
-double sql::queryPerson(std::vector<float> &feature)
+double sql::queryPerson(std::vector<float> &feature,int &id)
 {
     QSqlQuery query;
-    if( !query.exec( "SELECT FEATURE FROM WORKERS WHERE ID = (SELECT MAX(ID) FROM WORKERS)" ))
-        qDebug() << "Error getting FEATURE from table:\n" << query.lastError();
-    query.first();
-    QByteArray outByteArray = query.value( 0 ).toByteArray();
-    qDebug() << outByteArray.size();
+    int num = 1;
 
+    if( !query.exec( "SELECT ID, FEATURE FROM WORKERS" ))
+        qDebug() << "Error getting FEATURE from table:\n" << query.lastError();
+
+    //extract once
+    query.first();
+    QByteArray outByteArray = query.value(1).toByteArray();
+//    qDebug() << outByteArray.size();
     float outfloat[FEATURE_SIZE];
     memcpy(&outfloat[0], outByteArray.data(), FEATURE_SIZE*4);
     std::vector<float> tempFeature;
     for(int i=0;i<FEATURE_SIZE;i++){
         tempFeature.push_back(outfloat[i]);
     }
-
-    qDebug() << tempFeature.size();
-
+//    qDebug() << tempFeature.size();
     double similarity = calculSimilar(feature,tempFeature);
 
 
+    while (query.next()) {
+        outByteArray = query.value(1).toByteArray();
+        memcpy(&outfloat[0], outByteArray.data(), FEATURE_SIZE*4);
+        std::vector<float> tempFea;
+        for(int i=0;i<FEATURE_SIZE;i++){
+            tempFea.push_back(outfloat[i]);
+        }
+        double temp = calculSimilar(feature,tempFea);
+        if(similarity < temp){
+            similarity = temp;
+            num = query.value(0).toInt();
+        }
+    }
+
+    id = num;
     return similarity;
 
+}
+
+
+
+int sql::maxID()
+{
+    QSqlQuery query;
+    if( !query.exec( "SELECT MAX(ID) FROM WORKERS" ))
+        qDebug() << "Error getting SELECT MAX(ID) FROM WORKERS" << query.lastError();
+    query.first();
+    int num = query.value(0).toInt();
+    return num;
 }
