@@ -179,7 +179,7 @@
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>3</number>
+       <number>4</number>
       </property>
       <widget class="MainPage" name="page1">
        <attribute name="title">
@@ -216,7 +216,7 @@
      <x>0</x>
      <y>0</y>
      <width>1920</width>
-     <height>22</height>
+     <height>34</height>
     </rect>
    </property>
   </widget>

@@ -6,6 +6,8 @@
 #include <QRect>
 #include <QGraphicsOpacityEffect>
 
+#include <cmath>
+
 #define X_count 80
 
 template <typename T>
@@ -109,14 +111,17 @@ void MainPage::initUI()
     warning = new WarningWidget(this);
     warning->setGeometry(529, 320, 901, 307);
     warning->setHidden(true);
-
+    //PASS frame using
+    passing = new passwidget(this);
+    passing->setGeometry(529, 320, 901, 307);
+    passing->setHidden(true);
     ui->graphicsView->setScene(new QGraphicsScene(this));
     ui->graphicsView->scene()->addItem(&pixmap);
 
     ui->chartview->setScene(new QGraphicsScene(this));
     ui->chartview->scene()->addItem(&chartpixmap);
 
-    QString dbpath = "/home/zhang/Project/Qt_ncnn_opencv/QT_final/database/workers.db";
+    QString dbpath = "/home/lbr/projects/GitProjects/qon/Qt_ncnn_opencv/QT_final/database/workers.db";
     db = new sql(dbpath);
 
     state = RECOGNIZE;
@@ -178,14 +183,14 @@ void MainPage::on_pushButton_pressed()
     Mat frame,chart;
 
     //dlib
-    const char *landmark_model = "/home/zhang/Project/Qt_ncnn_opencv/shape_predictor_68_face_landmarks.dat";
+    const char *landmark_model = "/home/lbr/projects/GitProjects/qon/Qt_ncnn_opencv/QT_final/shape_predictor_68_face_landmarks.dat";
     dlib::shape_predictor pose_model;
     dlib::deserialize(landmark_model) >> pose_model;
 
-    //初始化mtcnn
-    const char *model_path = "/home/zhang/Project/Qt_ncnn_opencv/detection/models";
+    //初始化mtcnn & recognation
+    const char *model_path = "/home/lbr/projects/GitProjects/qon/Qt_ncnn_opencv/QT_final/models";
     Recognize recognize(model_path);
-    sampleimg = cv::imread("/home/zhang/Project/Qt_ncnn_opencv/detection/sample.jpg", CV_LOAD_IMAGE_COLOR);
+    sampleimg = cv::imread("/home/lbr/projects/GitProjects/qon/Qt_ncnn_opencv/QT_final/sample.jpg", CV_LOAD_IMAGE_COLOR);
     recognize.start(sampleimg, samplefea);
 
 
@@ -254,7 +259,7 @@ void MainPage::on_pushButton_pressed()
                 double left_ratio = (shape.part(39).x() - shape.part(36).x())/2.0/(shape.part(41).y() + shape.part(40).y() - shape.part(37).y() - shape.part(38).y()+0.1f);
                 double right_ratio = (shape.part(45).x() - shape.part(42).x())/2.0/(shape.part(47).y() + shape.part(46).y() - shape.part(44).y() - shape.part(43).y()+0.1f);
                 double mouth = (shape.part(66).y() + shape.part(57).y() - shape.part(62).y() - shape.part(51).y())/((float)(shape.part(54).x() - shape.part(48).x()));
-//                std::cout << "left: " << left_ratio << "right: " << right_ratio << "mouth: " << mouth << std::endl;
+                std::cout << "left: " << left_ratio << "right: " << right_ratio << "mouth: " << mouth << std::endl;
 
                 eye_blink.push_back(left_ratio+right_ratio-2.3);
                 if(eye_blink.size()>2)
@@ -262,7 +267,16 @@ void MainPage::on_pushButton_pressed()
 
                 if(eye_blink.front() < 0 && eye_blink.back()>0 ){
                     num_blink++;
-                    qDebug() << "num blink" << num_blink;
+                    //qDebug() << "num blink" << num_blink;
+                }
+
+                if(left_ratio<1&&right_ratio<1)
+                {
+                    close_eye++;
+                }
+                else
+                {
+                    close_eye = 0;
                 }
                 //chart
                 mouth_ratio.push_back(mouth);
@@ -287,17 +301,43 @@ void MainPage::on_pushButton_pressed()
 
 //                x_index++;
 
-                if(mouth>0.72){
+                if(mouth>1.63){
                     warning->setHidden(false);
+                    count_warning = 7;
                 }
                 else{
                     warning->setHidden(true);
                 }
-
-
-                if(state == RECOGNIZE && num_blink > 8){
+                if(close_eye>10)
+                {
+                    warning->setHidden(false);
+                    close_eye = 0;
+                    count_warning = 12;
+                }
+                if(count_warning-->0)
+                {
+                    warning->setHidden(false);
+                    qDebug()<<"count_warning:"<<count_warning<<"showed here."<<endl;
+                }
+                else// if(count_warning<=0)
+                {
+                    warning->setHidden(true);
+                }
+                qDebug()<<"count_warning:"<<count_warning<<endl;
+                if(state == RECOGNIZE && num_blink > 5){
+                    passing->setHidden(false);
+                    count_passing = 12;
                     num_blink = 0;
                     state = DETECTION;
+                }
+                else{
+                    passing->setHidden(true);
+                }
+                if(count_passing-->0){
+                    passing->setHidden(false);
+                }
+                else{
+                    passing->setHidden(true);
                 }
 
 

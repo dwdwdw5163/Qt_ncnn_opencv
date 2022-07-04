@@ -16,8 +16,8 @@ FaceInput::FaceInput(QWidget *parent) :
     ui->widget_2->setStyleSheet("QWidget#widget_2{border-image: url(:/style/images/rect.png);}");
     ui->widget_3->setStyleSheet("QWidget#widget_3{border-image: url(:/style/images/rect.png);}");
 
-    ui->graphicsView->setScene(new QGraphicsScene(this));
-    ui->graphicsView->scene()->addItem(&pixmap);
+    ui->graphicsView_faceinput->setScene(new QGraphicsScene(this));
+    ui->graphicsView_faceinput->scene()->addItem(&pixmap);
 
     ui->label->setStyleSheet("font:18pt;");
     ui->label_2->setStyleSheet("font:18pt;");
@@ -29,7 +29,7 @@ FaceInput::FaceInput(QWidget *parent) :
 //    widget->show();
     widget->setHidden(true);
 
-    QString dbpath = "/home/zhang/Project/Qt_ncnn_opencv/QT_final/database/workers.db";
+    QString dbpath = "/home/lbr/projects/GitProjects/qon/Qt_ncnn_opencv/QT_final/database/workers.db";
     db = new sql(dbpath);
 
     QString NumofWorkers = QStringLiteral("%1 人 ").arg(db->maxID());
@@ -63,9 +63,9 @@ void FaceInput::on_pushButton_pressed()
 
     Mat frame;
 
-    const char *model_path = "/home/zhang/Project/Qt_ncnn_opencv/detection/models";
+    const char *model_path = "/home/lbr/projects/GitProjects/qon/Qt_ncnn_opencv/QT_final/models";
     Recognize recognize(model_path);
-
+    std::cout<<"models right";
     while(video.isOpened())
     {
         video >> frame;
@@ -131,10 +131,10 @@ void FaceInput::on_pushButton_pressed()
                         frame.step,
                         QImage::Format_RGB888);
             pixmap.setPixmap( QPixmap::fromImage(qimg.rgbSwapped()) );
-            ui->graphicsView->fitInView(&pixmap, Qt::KeepAspectRatio);
+            ui->graphicsView_faceinput->fitInView(&pixmap, Qt::KeepAspectRatio);
         }
         qApp->processEvents();
-        waitKey(10);
+        //waitKey(10);
     }
 }
 

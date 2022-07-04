@@ -6,6 +6,8 @@
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QIODevice>
+#include <QDebug>
+#include <QVariant>
 
 
 #define FEATURE_SIZE 128

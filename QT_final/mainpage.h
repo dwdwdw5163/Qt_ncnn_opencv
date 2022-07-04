@@ -16,12 +16,13 @@
 #include "mtcnn.h"
 #include "mobilefacenet.h"
 #include "warningwidget.h"
+#include "passwidget.h"
 
 #include <opencv2/core.hpp>
 #include <dlib/image_processing/render_face_detections.h>
 #include <dlib/image_processing.h>
 #include <dlib/opencv.h>
-
+#include <faceinput.h>
 #include "sql.h"
 
 #include <QtCharts>
@@ -57,7 +58,7 @@ private:
 private:
     Ui::MainPage *ui;
     WarningWidget *warning;
-
+    passwidget *passing;
     cv::VideoCapture video;
 
     QGraphicsPixmapItem pixmap;
@@ -77,8 +78,9 @@ private:
     int num_blink = 0;
 
     int noFace_count = 0;
-
-
+    int close_eye = 0;
+    int count_warning = 0;
+    int count_passing = 0;
 //    QLineSeries *series_0 = new QLineSeries();
 //    QLineSeries *series_1 = new QLineSeries();
 //    QLineSeries *series_2 = new QLineSeries();

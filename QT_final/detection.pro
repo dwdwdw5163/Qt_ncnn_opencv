@@ -27,6 +27,7 @@ SOURCES += \
     modifyuserinfo.cpp \
     mtcnn.cpp \
     pagemenu.cpp \
+    passwidget.cpp \
     sql.cpp \
     warningwidget.cpp
 
@@ -42,6 +43,7 @@ HEADERS += \
     modifyuserinfo.h \
     mtcnn.h \
     pagemenu.h \
+    passwidget.h \
     sql.h \
     warningwidget.h
 
@@ -54,6 +56,7 @@ FORMS += \
     mainwindow.ui \
     modifyuserinfo.ui \
     pagemenu.ui \
+    passwidget.ui \
     warningwidget.ui
 
 
@@ -67,8 +70,8 @@ LIBS += -fopenmp
 LIBS += -lpthread -lm
 
 #LIBS += -lX11
-
-usrLocLib = /usr/local/lib
+NCNN_DIR = ./ncnn
+usrLocLib = $$PWD/opencv/lib
 # 配置所用库so文件
 LIBS += $${usrLocLib}/libopencv_highgui.so \
     $${usrLocLib}/libopencv_core.so \
@@ -82,14 +85,16 @@ LIBS += $${usrLocLib}/libopencv_highgui.so \
     $${usrLocLib}/libopencv_objdetect.so \
     $${usrLocLib}/libopencv_photo.so \
     $${usrLocLib}/libopencv_stitching.so \
-    //home/zhang/Project/Qt_ncnn_opencv/QT_final/ncnn/build/install/lib/libncnn.a \
 
 
-INCLUDEPATH += /usr/local/include/opencv
-INCLUDEPATH += /usr/local/include
+LIBS += $$PWD/ncnn/my_build/install/lib/libncnn.a
 
-NCNN_DIR = ./ncnn
-INCLUDEPATH += $${NCNN_DIR}/build/install/include/ncnn
+
+INCLUDEPATH += $$PWD/opencv/include
+
+INCLUDEPATH += $${NCNN_DIR}/my_build/install/include/ncnn \
+               $${NCNN_DIR}/src
+
 
 ##dlib
 #INCLUDEPATH += ./dlib
