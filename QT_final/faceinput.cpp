@@ -134,7 +134,10 @@ void FaceInput::on_pushButton_pressed()
             ui->graphicsView_faceinput->fitInView(&pixmap, Qt::KeepAspectRatio);
         }
         qApp->processEvents();
+<<<<<<< HEAD
         //waitKey(10);
+=======
+>>>>>>> 50bc3d9b1d5322bb913174261e5b05c1170a3cfa
     }
 }
 
