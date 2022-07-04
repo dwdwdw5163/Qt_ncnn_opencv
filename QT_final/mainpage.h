@@ -59,7 +59,10 @@ private:
     WarningWidget *warning;
 
     cv::VideoCapture video;
+
     QGraphicsPixmapItem pixmap;
+    QGraphicsPixmapItem chartpixmap;
+
     double threshold = 0.65;
     cv::Mat sampleimg;
     bool isSample = false;
@@ -76,12 +79,17 @@ private:
     int noFace_count = 0;
 
 
-    QLineSeries *series_0 = new QLineSeries();
-    QLineSeries *series_1 = new QLineSeries();
-    QLineSeries *series_2 = new QLineSeries();
+//    QLineSeries *series_0 = new QLineSeries();
+//    QLineSeries *series_1 = new QLineSeries();
+//    QLineSeries *series_2 = new QLineSeries();
 
-    QChart *chart = new QChart();  //创建QChart实例,为图表框架,相当图画笔
-    int x_index = 0;
+//    QChart *chart = new QChart();  //创建QChart实例,为图表框架,相当图画笔
+//    int x_index = 0;
+
+    std::vector<double> mouth_ratio;
+    std::vector<double> left_eye;
+    std::vector<double> right_eye;
+
 
 };
 

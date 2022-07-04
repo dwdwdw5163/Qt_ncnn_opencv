@@ -3,7 +3,6 @@
 #include "mobilefacenet.h"
 
 
-#define FEATURE_SIZE 128
 
 
 sql::sql(const QString &DatabaseName)
@@ -32,13 +31,6 @@ bool sql::addPerson(int &id,QString& name,int &age,std::vector<float> &feature)
 {
     bool success = false;
     qDebug() << feature.size();
-
-//    QByteArray data;
-//    QDataStream stream(&data, QIODevice::WriteOnly);
-//    for (auto x : feature)
-//        stream << x;
-
-
 
     QByteArray data;
     data.resize(FEATURE_SIZE*4);
@@ -109,10 +101,61 @@ double sql::queryPerson(std::vector<float> &feature,int &id)
 
     id = num;
     return similarity;
+}
+
+void sql::queryFeaturetoMAP()
+{
+    QSqlQuery query;
+    QByteArray outByteArray;
+//    float outfloat[FEATURE_SIZE];
+    std::array<float, FEATURE_SIZE> outfloat;
+    std::vector<float> tempFeature;
+
+    if( !query.exec( "SELECT ID, FEATURE FROM WORKERS" ))
+        qDebug() << "Error getting FEATURE from table:\n" << query.lastError();
+
+    while (query.next()) {
+        outByteArray = query.value(1).toByteArray();
+        memcpy(&outfloat[0], outByteArray.data(), FEATURE_SIZE*4);
+        featureMap.push_back(outfloat);
+    }
 
 }
 
+double sql::findKindred(std::vector<float> &feature,int &id)
+{
+    double similarity = 0;
+    double temp = 0;
+    int num = 0;
 
+    if(featureMap.size()==0){
+        queryFeaturetoMAP();
+        qDebug() << featureMap.size();
+    }
+
+//    qDebug() << "featureMapSize" <<featureMap.size();
+    for(int i = 0;i < featureMap.size();i++){
+        double ret = 0.0, mod1 = 0.0, mod2 = 0.0;
+
+//        qDebug() <<"featureMap.at(i) size"<< featureMap.at(i).size();
+        //calc simi
+        for (std::vector<float>::size_type ii = 0; ii != feature.size(); ++ii)
+        {
+            ret += feature[ii] * featureMap.at(i).at(ii);
+            mod1 += feature[ii] * feature[ii];
+            mod2 += featureMap.at(i).at(ii) * featureMap.at(i).at(ii);
+        }
+        temp = (ret / sqrt(mod1) / sqrt(mod2) + 1) / 2.0;
+
+        if(similarity < temp){
+            similarity = temp;
+            num = i+1;
+        }
+    }
+
+    id = num;
+    return similarity;
+}
 
 int sql::maxID()
 {

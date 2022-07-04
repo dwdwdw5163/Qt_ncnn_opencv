@@ -8,6 +8,40 @@
 
 #define X_count 80
 
+template <typename T>
+cv::Mat plotGraph(std::vector<T>& val1, std::vector<T>& val2, std::vector<T>& val3, int YRange[2])
+{
+//    auto it = minmax_element(val1.begin(), val1.end());
+//    float scale = 1./ceil(*it.second - *it.first);
+//    float bias = *it.first;
+//    float scale = 1/YRange[1];
+//    float bias = 0;
+
+//    it = minmax_element(val2.begin(), val2.end());
+//    float temp = 1./ceil(*it.second - *it.first);
+//    scale = scale > temp ? temp : scale;
+
+//    it = minmax_element(val3.begin(), val3.end());
+//    temp = 1./ceil(*it.second - *it.first);
+//    scale = scale > temp ? temp : scale;
+
+//    int rows = YRange[1] - YRange[0] + 1;
+    int rows = 200;
+    cv::Mat image = cv::Mat::zeros( rows, val1.size(), CV_8UC3 );
+    image.setTo(0);
+    for (int i = 0; i < (int)val1.size()-1; i++)
+    {
+//        cv::line(image, cv::Point(i, rows - 1 - (val1[i] - bias)*scale*YRange[1]), cv::Point(i+1, rows - 1 - (val1[i+1] - bias)*scale*YRange[1]), cv::Scalar(255, 0, 0), 1);
+//        cv::line(image, cv::Point(i, rows - 1 - (val2[i] - bias)*scale*YRange[1]), cv::Point(i+1, rows - 1 - (val2[i+1] - bias)*scale*YRange[1]), cv::Scalar(0, 255, 0), 1);
+//        cv::line(image, cv::Point(i, rows - 1 - (val3[i] - bias)*scale*YRange[1]), cv::Point(i+1, rows - 1 - (val3[i+1] - bias)*scale*YRange[1]), cv::Scalar(0, 0, 255), 1);
+        cv::line(image, cv::Point(i, rows - 1 - (val1[i])*100), cv::Point(i+1, rows - 1 - (val1[i+1])*100), cv::Scalar(255, 0, 0), 1);
+        cv::line(image, cv::Point(i, rows - 1 - (val2[i])*100), cv::Point(i+1, rows - 1 - (val2[i+1])*100), cv::Scalar(0, 255, 0), 1);
+        cv::line(image, cv::Point(i, rows - 1 - (val3[i])*100), cv::Point(i+1, rows - 1 - (val3[i+1])*100), cv::Scalar(0, 0, 255), 1);
+    }
+
+    return image;
+}
+
 
 void draw_polyline(cv::Mat &img, const dlib::full_object_detection& d, const int start, const int end, bool isClosed = false)
 {
@@ -79,6 +113,9 @@ void MainPage::initUI()
     ui->graphicsView->setScene(new QGraphicsScene(this));
     ui->graphicsView->scene()->addItem(&pixmap);
 
+    ui->chartview->setScene(new QGraphicsScene(this));
+    ui->chartview->scene()->addItem(&chartpixmap);
+
     QString dbpath = "/home/zhang/Project/Qt_ncnn_opencv/QT_final/database/workers.db";
     db = new sql(dbpath);
 
@@ -86,39 +123,39 @@ void MainPage::initUI()
 
 
     //chart
-    QValueAxis *axisX = new QValueAxis();
-    QValueAxis *axisY = new QValueAxis();
-    QValueAxis *axisY3 = new QValueAxis;
-    axisX->setRange(0, X_count);
-    axisY->setRange(-0, 1.5);
+//    QValueAxis *axisX = new QValueAxis();
+//    QValueAxis *axisY = new QValueAxis();
+//    QValueAxis *axisY3 = new QValueAxis;
+//    axisX->setRange(0, X_count);
+//    axisY->setRange(-0, 1.5);
 
-    chart->addSeries(series_0);
-    chart->addSeries(series_1);
-    chart->addSeries(series_2);
-    axisY3->setRange(-0, 1);
+//    chart->addSeries(series_0);
+//    chart->addSeries(series_1);
+//    chart->addSeries(series_2);
+//    axisY3->setRange(-0, 1);
 
-    axisY3->setLinePenColor(series_1->pen().color());
-    axisY3->setGridLinePen((series_1->pen()));
+//    axisY3->setLinePenColor(series_1->pen().color());
+//    axisY3->setGridLinePen((series_1->pen()));
 
-    chart->addAxis(axisX,Qt::AlignBottom);
-    chart->addAxis(axisY,Qt::AlignLeft);
-    chart->addAxis(axisY3, Qt::AlignRight);
+//    chart->addAxis(axisX,Qt::AlignBottom);
+//    chart->addAxis(axisY,Qt::AlignLeft);
+//    chart->addAxis(axisY3, Qt::AlignRight);
 
-    series_0->attachAxis(axisX);
-    series_0->attachAxis(axisY);
-    series_1->attachAxis(axisX);
-    series_1->attachAxis(axisY3);
-    series_2->attachAxis(axisX);
-    series_2->attachAxis(axisY3);
+//    series_0->attachAxis(axisX);
+//    series_0->attachAxis(axisY);
+//    series_1->attachAxis(axisX);
+//    series_1->attachAxis(axisY3);
+//    series_2->attachAxis(axisX);
+//    series_2->attachAxis(axisY3);
 
 
 
-    chart->legend()->hide();
-    chart->setTitle("Mouth and eye ratio");
+//    chart->legend()->hide();
+//    chart->setTitle("Mouth and eye ratio");
 
-    ui->chartview->setRenderHint(QPainter::Antialiasing);
-    ui->chartview->setChart(chart);
-    ui->chartview->show();
+//    ui->chartview->setRenderHint(QPainter::Antialiasing);
+//    ui->chartview->setChart(chart);
+//    ui->chartview->show();
 
 }
 
@@ -138,7 +175,7 @@ void MainPage::on_pushButton_pressed()
         return;
     }
     ui->pushButton->setText("关闭摄像头");
-    Mat frame,img_small;
+    Mat frame,chart;
 
     //dlib
     const char *landmark_model = "/home/zhang/Project/Qt_ncnn_opencv/shape_predictor_68_face_landmarks.dat";
@@ -191,7 +228,7 @@ void MainPage::on_pushButton_pressed()
                     recognize.start(croppedImage, croppedfea);
                     double similar;
                     int id;
-                    similar = db->queryPerson(croppedfea,id);
+                    similar = db->findKindred(croppedfea,id);
 //                    qDebug() << "id: " << id << "similarity: " << similar;
 
                     QString text = QStringLiteral("ID: %1 similarity: %2 ").arg(id).arg(similar);
@@ -211,8 +248,7 @@ void MainPage::on_pushButton_pressed()
                 dlib::full_object_detection shape = pose_model(dimg,R);
                 shapes.push_back(shape);
 
-                if(state == DETECTION)
-                    render_face(frame, shape);
+                render_face(frame, shape);
 
                 //calculate eyes
                 double left_ratio = (shape.part(39).x() - shape.part(36).x())/2.0/(shape.part(41).y() + shape.part(40).y() - shape.part(37).y() - shape.part(38).y()+0.1f);
@@ -220,8 +256,8 @@ void MainPage::on_pushButton_pressed()
                 double mouth = (shape.part(66).y() + shape.part(57).y() - shape.part(62).y() - shape.part(51).y())/((float)(shape.part(54).x() - shape.part(48).x()));
 //                std::cout << "left: " << left_ratio << "right: " << right_ratio << "mouth: " << mouth << std::endl;
 
-                eye_blink.push_back(left_ratio+right_ratio-1.3);
-                if(eye_blink.size()>3)
+                eye_blink.push_back(left_ratio+right_ratio-2.3);
+                if(eye_blink.size()>2)
                     eye_blink.erase(eye_blink.begin());
 
                 if(eye_blink.front() < 0 && eye_blink.back()>0 ){
@@ -229,16 +265,29 @@ void MainPage::on_pushButton_pressed()
                     qDebug() << "num blink" << num_blink;
                 }
                 //chart
-                series_0->append(x_index,mouth);
-                series_1->append(x_index,left_ratio - 0.5);
-                series_2->append(x_index,right_ratio - 0.5);
-                qreal x = chart->plotArea().width() / X_count;
-                if(x_index > X_count)
-                    chart->scroll(x,0);
+                mouth_ratio.push_back(mouth);
+                left_eye.push_back(left_ratio);
+                right_eye.push_back(right_ratio);
+                if(mouth_ratio.size()>300){
+                    mouth_ratio.erase(mouth_ratio.begin());
+                    left_eye.erase(left_eye.begin());
+                    right_eye.erase(right_eye.begin());
+                }
 
-                x_index++;
+                int range[2] = {0, 2};
 
-                if(mouth>0.65){
+                chart = plotGraph(mouth_ratio,left_eye,right_eye,range);
+
+//                series_0->append(x_index,mouth);
+//                series_1->append(x_index,left_ratio - 0.5);
+//                series_2->append(x_index,right_ratio - 0.5);
+//                qreal x = chart->plotArea().width() / X_count;
+//                if(x_index > X_count)
+//                    chart->scroll(x,0);
+
+//                x_index++;
+
+                if(mouth>0.72){
                     warning->setHidden(false);
                 }
                 else{
@@ -277,6 +326,18 @@ void MainPage::on_pushButton_pressed()
                         QImage::Format_RGB888);
             pixmap.setPixmap( QPixmap::fromImage(qimg.rgbSwapped()) );
             ui->graphicsView->fitInView(&pixmap, Qt::KeepAspectRatio);
+
+            QImage chartqimg(chart.data,
+                             chart.cols,
+                             chart.rows,
+                             chart.step,
+                             QImage::Format_RGB888);
+            chartpixmap.setPixmap( QPixmap::fromImage(chartqimg.rgbSwapped()) );
+            ui->chartview->fitInView(&chartpixmap, Qt::KeepAspectRatio);
+
+
+
+
         }
         qApp->processEvents();
     }
