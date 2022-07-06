@@ -185,7 +185,20 @@ int sql::maxID()
     QSqlQuery query;
     if( !query.exec( "SELECT MAX(ID) FROM WORKERS" ))
         qDebug() << "Error getting SELECT MAX(ID) FROM WORKERS" << query.lastError();
-    query.first();
-    int num = query.value(0).toInt();
+    int num = 0;
+    if(query.first())
+        num = query.value(0).toInt();
+    return num;
+}
+
+int sql::maxHistory()
+{
+    QSqlQuery query;
+    if( !query.exec( "SELECT MAX(ID) FROM HISTORY" ))
+        qDebug() << "Error getting SELECT MAX(ID) FROM HISTORY" << query.lastError();
+    int num = 0;
+    if(query.first())
+        num = query.value(0).toInt();
+
     return num;
 }

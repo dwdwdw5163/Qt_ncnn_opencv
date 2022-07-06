@@ -52,7 +52,7 @@ private slots:
 private:
     void initUI();
     void resizeEvent(QResizeEvent*);
-    void save_frame(cv::Mat roi,int save_idx);
+    void save_frame(cv::Mat roi,int save_idx,QString misbehavior);
 private:
     Ui::MainPage *ui;
     WarningWidget *warning;

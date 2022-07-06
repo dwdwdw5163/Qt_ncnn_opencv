@@ -111,6 +111,7 @@ void MainPage::initUI()
     db = new sql(dbpath);
 
     state = RECOGNIZE;
+    save_idx += db->maxHistory();
 
 
 }
@@ -136,7 +137,7 @@ void MainPage::on_pushButton_pressed()
     Mat frame,chart;
 
     //dlib
-    const char *landmark_model = "/home/zhang/Project/Qt_ncnn_opencv/QT_final/shape_predictor_68_face_landmarks.dat";
+    const char *landmark_model = "/home/zhang/Project/Qt_ncnn_opencv/shape_predictor_68_face_landmarks.dat";
     dlib::shape_predictor pose_model;
     dlib::deserialize(landmark_model) >> pose_model;
 
@@ -245,65 +246,43 @@ void MainPage::on_pushButton_pressed()
 
                 chart = plotGraph(mouth_ratio,left_eye,right_eye,range);
 
+                if(state == DETECTION)
+                {
 
-                readtxt.open("/home/zhang/Project/Qt_ncnn_opencv/QT_final/idx.txt", ios::out );
-                if(!readtxt.is_open()){
-                    qDebug()<<"open readtxt error";
-                }
-                readtxt >> str_idx;
-                if(str_idx[0] != EOF){
-                    save_idx = QString::fromStdString(str_idx).toInt() + 1;
-                    readtxt.close();
-                }
-
-                if(mouth>1.63){
-                    warning->setHidden(false);
-                    count_warning = 7;
-                    if(SAVE){
-                        this->save_frame(ROI,save_idx);
-
-                        writetxt.open("/home/zhang/Project/Qt_ncnn_opencv/QT_final/idx.txt", ios::out | ios::trunc );
-                        if(!writetxt.is_open()){
-                            qDebug()<<"open writetxt error";
+                    if(mouth>1.63){
+                        warning->setHidden(false);
+                        count_warning = 7;
+                        if(SAVE){
+                            this->save_frame(ROI,save_idx,"mouth");
+                            save_idx++;
+                            SAVE = 0;
                         }
-                        str_idx = to_string(save_idx);
-                        writetxt << str_idx;
-                        writetxt.close();
-                        save_idx++;
-                        SAVE = 0;
                     }
-                }
-                else{
-                    warning->setHidden(true);
-                }
-                if(close_eye>10)
-                {
-                    warning->setHidden(false);
-                    if(SAVE){
-                        this->save_frame(ROI,save_idx);
-                        writetxt.open("/home/zhang/Project/Qt_ncnn_opencv/QT_final/idx.txt", ios::out | ios::trunc );
-                        if(!writetxt.is_open()){
-                            qDebug()<<"open writetxt error";
+                    else{
+                        warning->setHidden(true);
+                    }
+                    if(close_eye>10)
+                    {
+                        warning->setHidden(false);
+                        if(SAVE){
+                            this->save_frame(ROI,save_idx,"eye");
+                            save_idx++;
+                            SAVE = 0;
                         }
-                        str_idx = to_string(save_idx);
-                        writetxt << str_idx;
-                        writetxt.close();
-                        save_idx++;
-                        SAVE = 0;
+                        close_eye = 0;
+                        count_warning = 12;
                     }
-                    close_eye = 0;
-                    count_warning = 12;
+                    if(count_warning-->0)
+                    {
+                        warning->setHidden(false);
+                        qDebug()<<"count_warning:"<<count_warning<<"showed here.";
+                    }
+                    else// if(count_warning<=0)
+                    {
+                        warning->setHidden(true);
+                    }
+                    qDebug()<<"count_warning:"<<count_warning;
                 }
-                if(count_warning-->0)
-                {
-                    warning->setHidden(false);
-                    qDebug()<<"count_warning:"<<count_warning<<"showed here.";
-                }
-                else// if(count_warning<=0)
-                {
-                    warning->setHidden(true);
-                }
-                qDebug()<<"count_warning:"<<count_warning;
                 if(state == RECOGNIZE && num_blink > 5){
                     passing->setHidden(false);
                     count_passing = 12;
@@ -335,10 +314,6 @@ void MainPage::on_pushButton_pressed()
                     num_blink = 0;
                 }
             }
-
-
-
-
 
 
             QImage qimg(frame.data,
@@ -376,14 +351,14 @@ void MainPage::resizeEvent(QResizeEvent*)
 
 }
 
-void MainPage::save_frame(cv::Mat roi,int save_idx)
+void MainPage::save_frame(cv::Mat roi,int save_idx,QString misbehavior)
 {
-    string img_path = "/home/zhang/image_"+to_string(save_idx)+".jpg";
+
+    string img_path = "/home/zhang/Project/Qt_ncnn_opencv/QT_final/his_imgs/image_"+to_string(save_idx)+".jpg";
     if(!(roi.empty())){
        cv::imwrite(img_path,roi);
        qDebug()<<"save_frame() called   idx = "<<save_idx;
        QString date="null";
-       QString misbehavior="null";
        QString imgpath = QString::fromStdString(img_path);
        db->addHistory(save_idx,date,misbehavior,imgpath);
     }

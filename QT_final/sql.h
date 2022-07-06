@@ -25,6 +25,8 @@ public:
     void queryFeaturetoMAP();
     double findKindred(std::vector<float> &feature,int &id);
     int maxID();
+    int maxHistory();
+
 
 private:
     QSqlDatabase database;
