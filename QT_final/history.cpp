@@ -53,3 +53,5 @@ History::~History()
 {
     delete ui;
 }
+
+

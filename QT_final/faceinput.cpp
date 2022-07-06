@@ -29,7 +29,7 @@ FaceInput::FaceInput(QWidget *parent) :
 //    widget->show();
     widget->setHidden(true);
 
-    QString dbpath = "/home/lbr/projects/GitProjects/qon/Qt_ncnn_opencv/QT_final/database/workers.db";
+    QString dbpath = "/home/zhang/Project/Qt_ncnn_opencv/QT_final/database/workers.db";
     db = new sql(dbpath);
 
     QString NumofWorkers = QStringLiteral("%1 人 ").arg(db->maxID());
@@ -63,7 +63,7 @@ void FaceInput::on_pushButton_pressed()
 
     Mat frame;
 
-    const char *model_path = "/home/lbr/projects/GitProjects/qon/Qt_ncnn_opencv/QT_final/models";
+    const char *model_path = "/home/zhang/Project/Qt_ncnn_opencv/QT_final/models";
     Recognize recognize(model_path);
     std::cout<<"models right";
     while(video.isOpened())
@@ -134,10 +134,7 @@ void FaceInput::on_pushButton_pressed()
             ui->graphicsView_faceinput->fitInView(&pixmap, Qt::KeepAspectRatio);
         }
         qApp->processEvents();
-<<<<<<< HEAD
-        //waitKey(10);
-=======
->>>>>>> 50bc3d9b1d5322bb913174261e5b05c1170a3cfa
+
     }
 }
 

@@ -8,34 +8,20 @@
 
 #include <cmath>
 
+#include "ExternValues.h"
+
+#include <fstream>
+
 #define X_count 80
 
 template <typename T>
 cv::Mat plotGraph(std::vector<T>& val1, std::vector<T>& val2, std::vector<T>& val3, int YRange[2])
 {
-//    auto it = minmax_element(val1.begin(), val1.end());
-//    float scale = 1./ceil(*it.second - *it.first);
-//    float bias = *it.first;
-//    float scale = 1/YRange[1];
-//    float bias = 0;
-
-//    it = minmax_element(val2.begin(), val2.end());
-//    float temp = 1./ceil(*it.second - *it.first);
-//    scale = scale > temp ? temp : scale;
-
-//    it = minmax_element(val3.begin(), val3.end());
-//    temp = 1./ceil(*it.second - *it.first);
-//    scale = scale > temp ? temp : scale;
-
-//    int rows = YRange[1] - YRange[0] + 1;
     int rows = 200;
     cv::Mat image = cv::Mat::zeros( rows, val1.size(), CV_8UC3 );
     image.setTo(0);
     for (int i = 0; i < (int)val1.size()-1; i++)
     {
-//        cv::line(image, cv::Point(i, rows - 1 - (val1[i] - bias)*scale*YRange[1]), cv::Point(i+1, rows - 1 - (val1[i+1] - bias)*scale*YRange[1]), cv::Scalar(255, 0, 0), 1);
-//        cv::line(image, cv::Point(i, rows - 1 - (val2[i] - bias)*scale*YRange[1]), cv::Point(i+1, rows - 1 - (val2[i+1] - bias)*scale*YRange[1]), cv::Scalar(0, 255, 0), 1);
-//        cv::line(image, cv::Point(i, rows - 1 - (val3[i] - bias)*scale*YRange[1]), cv::Point(i+1, rows - 1 - (val3[i+1] - bias)*scale*YRange[1]), cv::Scalar(0, 0, 255), 1);
         cv::line(image, cv::Point(i, rows - 1 - (val1[i])*100), cv::Point(i+1, rows - 1 - (val1[i+1])*100), cv::Scalar(255, 0, 0), 1);
         cv::line(image, cv::Point(i, rows - 1 - (val2[i])*100), cv::Point(i+1, rows - 1 - (val2[i+1])*100), cv::Scalar(0, 255, 0), 1);
         cv::line(image, cv::Point(i, rows - 1 - (val3[i])*100), cv::Point(i+1, rows - 1 - (val3[i+1])*100), cv::Scalar(0, 0, 255), 1);
@@ -121,49 +107,16 @@ void MainPage::initUI()
     ui->chartview->setScene(new QGraphicsScene(this));
     ui->chartview->scene()->addItem(&chartpixmap);
 
-    QString dbpath = "/home/lbr/projects/GitProjects/qon/Qt_ncnn_opencv/QT_final/database/workers.db";
+    QString dbpath = "/home/zhang/Project/Qt_ncnn_opencv/QT_final/database/workers.db";
     db = new sql(dbpath);
 
     state = RECOGNIZE;
 
 
-    //chart
-//    QValueAxis *axisX = new QValueAxis();
-//    QValueAxis *axisY = new QValueAxis();
-//    QValueAxis *axisY3 = new QValueAxis;
-//    axisX->setRange(0, X_count);
-//    axisY->setRange(-0, 1.5);
-
-//    chart->addSeries(series_0);
-//    chart->addSeries(series_1);
-//    chart->addSeries(series_2);
-//    axisY3->setRange(-0, 1);
-
-//    axisY3->setLinePenColor(series_1->pen().color());
-//    axisY3->setGridLinePen((series_1->pen()));
-
-//    chart->addAxis(axisX,Qt::AlignBottom);
-//    chart->addAxis(axisY,Qt::AlignLeft);
-//    chart->addAxis(axisY3, Qt::AlignRight);
-
-//    series_0->attachAxis(axisX);
-//    series_0->attachAxis(axisY);
-//    series_1->attachAxis(axisX);
-//    series_1->attachAxis(axisY3);
-//    series_2->attachAxis(axisX);
-//    series_2->attachAxis(axisY3);
-
-
-
-//    chart->legend()->hide();
-//    chart->setTitle("Mouth and eye ratio");
-
-//    ui->chartview->setRenderHint(QPainter::Antialiasing);
-//    ui->chartview->setChart(chart);
-//    ui->chartview->show();
-
 }
-
+std::vector<double> mouth_ratio;
+std::vector<double> left_eye;
+std::vector<double> right_eye;
 void MainPage::on_pushButton_pressed()
 {
     using namespace cv;
@@ -183,15 +136,15 @@ void MainPage::on_pushButton_pressed()
     Mat frame,chart;
 
     //dlib
-    const char *landmark_model = "/home/lbr/projects/GitProjects/qon/Qt_ncnn_opencv/QT_final/shape_predictor_68_face_landmarks.dat";
+    const char *landmark_model = "/home/zhang/Project/Qt_ncnn_opencv/QT_final/shape_predictor_68_face_landmarks.dat";
     dlib::shape_predictor pose_model;
     dlib::deserialize(landmark_model) >> pose_model;
 
     //初始化mtcnn & recognation
-    const char *model_path = "/home/lbr/projects/GitProjects/qon/Qt_ncnn_opencv/QT_final/models";
+    const char *model_path = "/home/zhang/Project/Qt_ncnn_opencv/QT_final/models";
     Recognize recognize(model_path);
-    sampleimg = cv::imread("/home/lbr/projects/GitProjects/qon/Qt_ncnn_opencv/QT_final/sample.jpg", CV_LOAD_IMAGE_COLOR);
-    recognize.start(sampleimg, samplefea);
+    //sampleimg = cv::imread("/home/lbr/projects/GitProjects/tq/Qt_ncnn_opencv/QT_final/sample.jpg", CV_LOAD_IMAGE_COLOR);
+    //recognize.start(sampleimg, samplefea);
 
 
 
@@ -270,7 +223,7 @@ void MainPage::on_pushButton_pressed()
                     //qDebug() << "num blink" << num_blink;
                 }
 
-                if(left_ratio<1&&right_ratio<1)
+                if(left_ratio>1&&right_ratio>1)
                 {
                     close_eye++;
                 }
@@ -292,18 +245,33 @@ void MainPage::on_pushButton_pressed()
 
                 chart = plotGraph(mouth_ratio,left_eye,right_eye,range);
 
-//                series_0->append(x_index,mouth);
-//                series_1->append(x_index,left_ratio - 0.5);
-//                series_2->append(x_index,right_ratio - 0.5);
-//                qreal x = chart->plotArea().width() / X_count;
-//                if(x_index > X_count)
-//                    chart->scroll(x,0);
 
-//                x_index++;
+                readtxt.open("/home/zhang/Project/Qt_ncnn_opencv/QT_final/idx.txt", ios::out );
+                if(!readtxt.is_open()){
+                    qDebug()<<"open readtxt error";
+                }
+                readtxt >> str_idx;
+                if(str_idx[0] != EOF){
+                    save_idx = QString::fromStdString(str_idx).toInt() + 1;
+                    readtxt.close();
+                }
 
                 if(mouth>1.63){
                     warning->setHidden(false);
                     count_warning = 7;
+                    if(SAVE){
+                        this->save_frame(ROI,save_idx);
+
+                        writetxt.open("/home/zhang/Project/Qt_ncnn_opencv/QT_final/idx.txt", ios::out | ios::trunc );
+                        if(!writetxt.is_open()){
+                            qDebug()<<"open writetxt error";
+                        }
+                        str_idx = to_string(save_idx);
+                        writetxt << str_idx;
+                        writetxt.close();
+                        save_idx++;
+                        SAVE = 0;
+                    }
                 }
                 else{
                     warning->setHidden(true);
@@ -311,19 +279,31 @@ void MainPage::on_pushButton_pressed()
                 if(close_eye>10)
                 {
                     warning->setHidden(false);
+                    if(SAVE){
+                        this->save_frame(ROI,save_idx);
+                        writetxt.open("/home/zhang/Project/Qt_ncnn_opencv/QT_final/idx.txt", ios::out | ios::trunc );
+                        if(!writetxt.is_open()){
+                            qDebug()<<"open writetxt error";
+                        }
+                        str_idx = to_string(save_idx);
+                        writetxt << str_idx;
+                        writetxt.close();
+                        save_idx++;
+                        SAVE = 0;
+                    }
                     close_eye = 0;
                     count_warning = 12;
                 }
                 if(count_warning-->0)
                 {
                     warning->setHidden(false);
-                    qDebug()<<"count_warning:"<<count_warning<<"showed here."<<endl;
+                    qDebug()<<"count_warning:"<<count_warning<<"showed here.";
                 }
                 else// if(count_warning<=0)
                 {
                     warning->setHidden(true);
                 }
-                qDebug()<<"count_warning:"<<count_warning<<endl;
+                qDebug()<<"count_warning:"<<count_warning;
                 if(state == RECOGNIZE && num_blink > 5){
                     passing->setHidden(false);
                     count_passing = 12;
@@ -339,8 +319,10 @@ void MainPage::on_pushButton_pressed()
                 else{
                     passing->setHidden(true);
                 }
-
-
+                if(count_warning < 0){
+                    SAVE = 1;
+                    count_warning = 0;
+                }
                 noFace_count = 0;
 
             }
@@ -392,5 +374,18 @@ void MainPage::resizeEvent(QResizeEvent*)
 //    rect = ui->widget_2->geometry();
 //    ui->chartview->setGeometry(rect.x()-5,rect.y()-10,rect.width(),rect.height());
 
+}
+
+void MainPage::save_frame(cv::Mat roi,int save_idx)
+{
+    string img_path = "/home/zhang/image_"+to_string(save_idx)+".jpg";
+    if(!(roi.empty())){
+       cv::imwrite(img_path,roi);
+       qDebug()<<"save_frame() called   idx = "<<save_idx;
+       QString date="null";
+       QString misbehavior="null";
+       QString imgpath = QString::fromStdString(img_path);
+       db->addHistory(save_idx,date,misbehavior,imgpath);
+    }
 }
 

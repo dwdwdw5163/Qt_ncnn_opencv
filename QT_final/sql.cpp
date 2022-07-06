@@ -157,6 +157,29 @@ double sql::findKindred(std::vector<float> &feature,int &id)
     return similarity;
 }
 
+void sql::addHistory(int id,QString date,QString misbehavior,QString imagePath)
+{
+
+    QSqlQuery query;
+
+    query.prepare("INSERT INTO HISTORY (ID,DATE,MISBEHAVIOR,IMAGEPATH) VALUES (:id, :date, :misbehavior, :imagepath)");
+    query.bindValue(":id", id);
+    query.bindValue(":date", date);
+    query.bindValue(":misbehavior", misbehavior);
+    query.bindValue(":imagepath", imagePath);
+
+    if(query.exec())
+    {
+       qDebug() << "addHistory successed";
+    }
+    else
+    {
+        qDebug() << "addHistory error:"
+                 << query.lastError();
+    }
+
+}
+
 int sql::maxID()
 {
     QSqlQuery query;

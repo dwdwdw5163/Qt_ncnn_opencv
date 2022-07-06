@@ -1,4 +1,4 @@
-QT       += core gui multimediawidgets sql charts
+QT       += core gui multimediawidgets sql
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 #define nullptr NULL
 CONFIG += c++11
@@ -33,6 +33,7 @@ SOURCES += \
     warningwidget.cpp
 
 HEADERS += \
+    ExternValues.h \
     customsqltablemodel.h \
     dataanalysis.h \
     dlib/queue.h \
@@ -73,7 +74,7 @@ LIBS += -lpthread -lm
 
 #LIBS += -lX11
 NCNN_DIR = ./ncnn
-usrLocLib = $$PWD/opencv/lib
+usrLocLib = /usr/local/lib/
 # 配置所用库so文件
 LIBS += $${usrLocLib}/libopencv_highgui.so \
     $${usrLocLib}/libopencv_core.so \
@@ -89,13 +90,13 @@ LIBS += $${usrLocLib}/libopencv_highgui.so \
     $${usrLocLib}/libopencv_stitching.so \
 
 
-LIBS += $$PWD/ncnn/my_build/install/lib/libncnn.a
+LIBS += /home/zhang/Project/Qt_ncnn_opencv/QT_final/ncnn/build/install/lib/libncnn.a
 
 
-INCLUDEPATH += $$PWD/opencv/include
+INCLUDEPATH += /usr/local/include/opencv2/
 
-INCLUDEPATH += $${NCNN_DIR}/my_build/install/include/ncnn \
-               $${NCNN_DIR}/src
+INCLUDEPATH += $${NCNN_DIR}/build/install/include/ncnn \
+
 
 
 ##dlib

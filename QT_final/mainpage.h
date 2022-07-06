@@ -25,8 +25,6 @@
 #include <faceinput.h>
 #include "sql.h"
 
-#include <QtCharts>
-
 //FSM
 enum{
     RECOGNIZE,
@@ -54,7 +52,7 @@ private slots:
 private:
     void initUI();
     void resizeEvent(QResizeEvent*);
-
+    void save_frame(cv::Mat roi,int save_idx);
 private:
     Ui::MainPage *ui;
     WarningWidget *warning;
@@ -88,11 +86,13 @@ private:
 //    QChart *chart = new QChart();  //创建QChart实例,为图表框架,相当图画笔
 //    int x_index = 0;
 
-    std::vector<double> mouth_ratio;
-    std::vector<double> left_eye;
-    std::vector<double> right_eye;
 
 
+    int save_idx = 0;
+    int SAVE = 1;
+    ifstream readtxt;
+    ofstream writetxt;
+    string str_idx;
 };
 
 #endif // MAINPAGE_H
