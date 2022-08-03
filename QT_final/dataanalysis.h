@@ -2,7 +2,8 @@
 #define DATAANALYSIS_H
 
 #include <QWidget>
-
+#include <QGraphicsPixmapItem>
+#include <QTimer>
 namespace Ui {
 class DataAnalysis;
 }
@@ -17,6 +18,11 @@ public:
 
 private:
     Ui::DataAnalysis *ui;
+    QGraphicsPixmapItem chartpixmap;
+    QTimer timer;
+
+public slots:
+    void plot();
 };
 
 #endif // DATAANALYSIS_H

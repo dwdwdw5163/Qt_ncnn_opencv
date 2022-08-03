@@ -30,7 +30,8 @@ SOURCES += \
     pagemenu.cpp \
     passwidget.cpp \
     sql.cpp \
-    warningwidget.cpp
+    warningwidget.cpp \
+    warningwidgetvt.cpp
 
 HEADERS += \
     ExternValues.h \
@@ -48,7 +49,8 @@ HEADERS += \
     pagemenu.h \
     passwidget.h \
     sql.h \
-    warningwidget.h
+    warningwidget.h \
+    warningwidgetvt.h
 
 FORMS += \
     dataanalysis.ui \
@@ -60,7 +62,8 @@ FORMS += \
     modifyuserinfo.ui \
     pagemenu.ui \
     passwidget.ui \
-    warningwidget.ui
+    warningwidget.ui \
+    warningwidgetvt.ui
 
 
 
@@ -74,7 +77,7 @@ LIBS += -lpthread -lm
 
 #LIBS += -lX11
 NCNN_DIR = ./ncnn
-usrLocLib = /usr/local/lib/
+usrLocLib = $$PWD/opencv/lib
 # 配置所用库so文件
 LIBS += $${usrLocLib}/libopencv_highgui.so \
     $${usrLocLib}/libopencv_core.so \
@@ -90,17 +93,13 @@ LIBS += $${usrLocLib}/libopencv_highgui.so \
     $${usrLocLib}/libopencv_stitching.so \
 
 
-LIBS += /home/zhang/Project/Qt_ncnn_opencv/QT_final/ncnn/build/install/lib/libncnn.a
+LIBS += $$PWD/ncnn/my_build/install/lib/libncnn.a
 
 
-INCLUDEPATH += /usr/local/include/opencv2/
+INCLUDEPATH += $$PWD/opencv/include
 
-INCLUDEPATH += $${NCNN_DIR}/build/install/include/ncnn \
-
-
-
-##dlib
-#INCLUDEPATH += ./dlib
+INCLUDEPATH += $${NCNN_DIR}/my_build/install/include/ncnn \
+               $${NCNN_DIR}/src
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

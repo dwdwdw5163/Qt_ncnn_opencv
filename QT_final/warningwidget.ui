@@ -26,7 +26,7 @@
          </size>
         </property>
         <property name="text">
-         <string>检测到违规行为!</string>
+         <string>检测到哈欠!</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignCenter</set>

@@ -1,14 +1,10 @@
-/*
-created by L. 2018.05.16
-*/
-
 #include "mobilefacenet.h"
 
 
 
 Recognize::Recognize(const std::string &model_path) {
-    std::string param_files = model_path + "/mobilefacenet.param";
-    std::string bin_files = model_path + "/mobilefacenet.bin";
+    std::string param_files = model_path + "/insightface.param";
+    std::string bin_files = model_path + "/insightface.bin";
     Recognet.load_param(param_files.c_str());
     Recognet.load_model(bin_files.c_str());
 }
@@ -24,8 +20,8 @@ void Recognize::RecogNet(ncnn::Mat& img_) {
     ex.input("data", img_);
     ncnn::Mat out;
     ex.extract("fc1", out);
-    feature_out.resize(128);
-    for (int j = 0; j < 128; j++)
+    feature_out.resize(512);
+    for (int j = 0; j < 512; j++)
     {
         feature_out[j] = out[j];
     }

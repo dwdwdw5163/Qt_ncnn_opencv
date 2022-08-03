@@ -2,7 +2,7 @@
 #define WARNINGWIDGET_H
 
 #include <QWidget>
-
+#include <QLabel>
 namespace Ui {
 class WarningWidget;
 }

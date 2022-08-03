@@ -63,46 +63,6 @@ bool sql::addPerson(int &id,QString& name,int &age,std::vector<float> &feature)
     return success;
 }
 
-double sql::queryPerson(std::vector<float> &feature,int &id)
-{
-    QSqlQuery query;
-    int num = 1;
-
-    if( !query.exec( "SELECT ID, FEATURE FROM WORKERS" ))
-        qDebug() << "Error getting FEATURE from table:\n" << query.lastError();
-
-    //extract once
-    query.first();
-    QByteArray outByteArray = query.value(1).toByteArray();
-//    qDebug() << outByteArray.size();
-    float outfloat[FEATURE_SIZE];
-    memcpy(&outfloat[0], outByteArray.data(), FEATURE_SIZE*4);
-    std::vector<float> tempFeature;
-    for(int i=0;i<FEATURE_SIZE;i++){
-        tempFeature.push_back(outfloat[i]);
-    }
-//    qDebug() << tempFeature.size();
-    double similarity = calculSimilar(feature,tempFeature);
-
-
-    while (query.next()) {
-        outByteArray = query.value(1).toByteArray();
-        memcpy(&outfloat[0], outByteArray.data(), FEATURE_SIZE*4);
-        std::vector<float> tempFea;
-        for(int i=0;i<FEATURE_SIZE;i++){
-            tempFea.push_back(outfloat[i]);
-        }
-        double temp = calculSimilar(feature,tempFea);
-        if(similarity < temp){
-            similarity = temp;
-            num = query.value(0).toInt();
-        }
-    }
-
-    id = num;
-    return similarity;
-}
-
 void sql::queryFeaturetoMAP()
 {
     QSqlQuery query;

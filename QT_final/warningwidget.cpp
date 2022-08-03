@@ -13,6 +13,8 @@ WarningWidget::WarningWidget(QWidget *parent) :
 
     ui->widget->setStyleSheet("QWidget#widget{border-image: url(:/style/images/warning.png);}");
     ui->label->setStyleSheet("background-color: rgb(255, 77, 77);border-radius: 8px;font:28pt;");
+//    ui->widget->move(200,200);
+//    ui->widget->setGeometry(1250,300,750,350);
 }
 
 WarningWidget::~WarningWidget()

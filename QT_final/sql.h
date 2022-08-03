@@ -10,7 +10,7 @@
 #include <QVariant>
 
 
-#define FEATURE_SIZE 128
+#define FEATURE_SIZE 512
 
 
 class sql
@@ -21,7 +21,6 @@ public:
     sql(const QString &DatabaseName);
     bool addPerson(int &id,QString& name,int &age,std::vector<float> &feature);
     void addHistory(int id,QString date,QString misbehavior,QString imagePath);
-    double queryPerson(std::vector<float> &feature,int &id);
     void queryFeaturetoMAP();
     double findKindred(std::vector<float> &feature,int &id);
     int maxID();

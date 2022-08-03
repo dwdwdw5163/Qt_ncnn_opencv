@@ -11,8 +11,8 @@ passwidget::passwidget(QWidget *parent) :
     this->setAutoFillBackground(true);
     this->setPalette(pal);
 
-    ui->widget->setStyleSheet("QWidget#widget{border-image: url(:/style/images/warning.png);}");
-    ui->label->setStyleSheet("background-color: rgb(77, 255, 77);border-radius: 8px;font:28pt;");
+    ui->widget->setStyleSheet("QWidget#widget{border-image: url(:/style/images/passing.png);}");
+    ui->label->setStyleSheet("background-color: rgb(120, 255, 120);border-radius: 8px;font:28pt;");
 }
 
 passwidget::~passwidget()

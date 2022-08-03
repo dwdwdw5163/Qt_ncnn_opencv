@@ -1,13 +1,5 @@
-//
-// Created by Longqi on 2017/11/18..
-//
-
-/*
- * TO DO : change the P-net and update the generat box
- */
-
 #include "mtcnn.h"
-
+#include <QDebug>
 bool cmpScore(Bbox lsh, Bbox rsh) {
     if (lsh.score < rsh.score)
         return true;
@@ -146,18 +138,46 @@ void MTCNN::nms(std::vector<Bbox> &boundingBox_, const float overlap_threshold, 
     float minY = 0;
     std::vector<int> vPick;
     int nPick = 0;
-    std::multimap<float, int> vScores;
+//    std::multimap<float, int> vScores;
+    //
+//    std::vector<std::pair<float,int> > vec;
+    //
+    int a[30]={0};
+    float b[30]={0.0};
     const int num_boxes = boundingBox_.size();
     vPick.resize(num_boxes);
+//    qDebug()<<"num_boxs: "<<num_boxes;
+    //
+    int count = num_boxes;
     for (int i = 0; i < num_boxes; ++i){
-        vScores.insert(std::pair<float, int>(boundingBox_[i].score, i));
+//        vScores.insert(std::pair<float, int>(boundingBox_[i].score, i));
+        //
+//        vec.emplace_back(std::pair<float, int>(boundingBox_[i].score, i));
+        //
+        a[i] = i;
+        b[i] = boundingBox_[i].score;
+//        qDebug()<<"i = "<<i<<" boundingBox_["<<i<<"].score: "<<boundingBox_[i].score<<endl;
     }
-    while(vScores.size() > 0){
-        int last = vScores.rbegin()->second;
+//    while(vScores.size() > 0){
+//        int last = vScores.rbegin()->second;
+    //
+    while(count > 0){
+        int last = a[count-1];
+    //
+//    while(vec.size() > 0){
+        //
+//        int last = vec.rbegin()->second;
         vPick[nPick] = last;
         nPick += 1;
-        for (std::multimap<float, int>::iterator it = vScores.begin(); it != vScores.end();){
-            int it_idx = it->second;
+//        qDebug()<<"in while "<<nPick<<" last = "<<last;
+//        for (std::multimap<float, int>::iterator it = vScores.begin(); it != vScores.end();){
+        //
+        for(int j=0;j<count;){
+        //
+//        for(std::vector<std::pair<float,int> >::iterator it = vec.begin(); it != vec.end();){
+//            int it_idx = it->second;
+            //
+            int it_idx = a[j];
             maxX = std::max(boundingBox_.at(it_idx).x1, boundingBox_.at(last).x1);
             maxY = std::max(boundingBox_.at(it_idx).y1, boundingBox_.at(last).y1);
             minX = std::min(boundingBox_.at(it_idx).x2, boundingBox_.at(last).x2);
@@ -173,13 +193,24 @@ void MTCNN::nms(std::vector<Bbox> &boundingBox_, const float overlap_threshold, 
                 IOU = IOU/((boundingBox_.at(it_idx).area < boundingBox_.at(last).area)? boundingBox_.at(it_idx).area : boundingBox_.at(last).area);
             }
             if(IOU > overlap_threshold){
-                it = vScores.erase(it);
-            }else{
-                it++;
+//                it = vScores.erase(it);
+                //
+//                it = vec.erase(it);
+                //
+                for(short iter = j;iter < count;iter++){
+                    a[j] = a[j+1];
+                    b[j] = b[j+1];
+                }
+                count--;
+            }
+            else{
+//                it++;
+                //
+                j++;
             }
         }
     }
-
+//    qDebug()<<"nPick: "<<nPick;
     vPick.resize(nPick);
     std::vector<Bbox> tmp_;
     tmp_.resize(nPick);
