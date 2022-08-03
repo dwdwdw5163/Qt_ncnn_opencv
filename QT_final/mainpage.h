@@ -12,11 +12,13 @@
 #include <QPixmap>
 #include <QCloseEvent>
 #include <QMessageBox>
-
+#include <QDateTime>
 #include "mtcnn.h"
 #include "mobilefacenet.h"
 #include "warningwidget.h"
+#include "warningwidgetvt.h"
 #include "passwidget.h"
+//#include "warningwidgett.h"
 
 #include <opencv2/core.hpp>
 #include <dlib/image_processing/render_face_detections.h>
@@ -56,7 +58,9 @@ private:
 private:
     Ui::MainPage *ui;
     WarningWidget *warning;
+    WarningWidgetVT *warning_;
     passwidget *passing;
+//    WarningWidgetT *warning2;
     cv::VideoCapture video;
 
     QGraphicsPixmapItem pixmap;
@@ -77,7 +81,8 @@ private:
 
     int noFace_count = 0;
     int close_eye = 0;
-    int count_warning = 0;
+    int count_warning_eyes = 0;
+    int count_warning_mouth = 0;
     int count_passing = 0;
 //    QLineSeries *series_0 = new QLineSeries();
 //    QLineSeries *series_1 = new QLineSeries();
@@ -90,9 +95,9 @@ private:
 
     int save_idx = 0;
     int SAVE = 1;
-    ifstream readtxt;
-    ofstream writetxt;
     string str_idx;
+    QDateTime Date;
+
 };
 
 #endif // MAINPAGE_H

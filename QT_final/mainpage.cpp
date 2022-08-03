@@ -13,7 +13,7 @@
 #include <fstream>
 
 #define X_count 80
-
+int count__ = 0;
 template <typename T>
 cv::Mat plotGraph(std::vector<T>& val1, std::vector<T>& val2, std::vector<T>& val3, int YRange[2])
 {
@@ -51,11 +51,6 @@ void render_face(cv::Mat &img, const dlib::full_object_detection& d)
         << "\n\t d.num_parts():  " << d.num_parts()
     );
 
-//    draw_polyline(img, d, 0, 16);           // Jaw line
-//    draw_polyline(img, d, 17, 21);          // Left eyebrow
-//    draw_polyline(img, d, 22, 26);          // Right eyebrow
-//    draw_polyline(img, d, 27, 30);          // Nose bridge
-//    draw_polyline(img, d, 30, 35, true);    // Lower nose
     draw_polyline(img, d, 36, 41, true);    // Left eye
     draw_polyline(img, d, 42, 47, true);    // Right Eye
     draw_polyline(img, d, 48, 59, true);    // Outer lip
@@ -94,9 +89,16 @@ void MainPage::initUI()
     ui->label_2->setStyleSheet("font:18pt;");
 
     //警告框使用
+    // yawn
     warning = new WarningWidget(this);
-    warning->setGeometry(529, 320, 901, 307);
+
+    warning->setGeometry(1770,300,800,350);
     warning->setHidden(true);
+    //sleepy
+    warning_ = new WarningWidgetVT(this);
+    warning_->setGeometry(1770,300,800,350);
+    warning_->setHidden(true);
+
     //PASS frame using
     passing = new passwidget(this);
     passing->setGeometry(529, 320, 901, 307);
@@ -107,7 +109,7 @@ void MainPage::initUI()
     ui->chartview->setScene(new QGraphicsScene(this));
     ui->chartview->scene()->addItem(&chartpixmap);
 
-    QString dbpath = "/home/zhang/Project/Qt_ncnn_opencv/QT_final/database/workers.db";
+    QString dbpath = "/home/lbr/projects/GitProjects/0707/Qt_ncnn_opencv/QT_final/database/workers.db";
     db = new sql(dbpath);
 
     state = RECOGNIZE;
@@ -122,7 +124,7 @@ void MainPage::on_pushButton_pressed()
 {
     using namespace cv;
     if(video.isOpened()){
-        ui->pushButton->setText("打开摄像头");
+        ui->pushButton->setText("Open Camera");
         video.release();
         return;
     }
@@ -133,18 +135,18 @@ void MainPage::on_pushButton_pressed()
             "<br>or that the camera is not being accessed by another program!");
         return;
     }
-    ui->pushButton->setText("关闭摄像头");
+    ui->pushButton->setText("Close Camera");
     Mat frame,chart;
 
     //dlib
-    const char *landmark_model = "/home/zhang/Project/Qt_ncnn_opencv/shape_predictor_68_face_landmarks.dat";
+    const char *landmark_model = "/home/lbr/projects/GitProjects/0707/Qt_ncnn_opencv/QT_final/shape_predictor_68_face_landmarks.dat";
     dlib::shape_predictor pose_model;
     dlib::deserialize(landmark_model) >> pose_model;
 
     //初始化mtcnn & recognation
-    const char *model_path = "/home/zhang/Project/Qt_ncnn_opencv/QT_final/models";
+    const char *model_path = "/home/lbr/projects/GitProjects/0707/Qt_ncnn_opencv/QT_final/models";
     Recognize recognize(model_path);
-    //sampleimg = cv::imread("/home/lbr/projects/GitProjects/tq/Qt_ncnn_opencv/QT_final/sample.jpg", CV_LOAD_IMAGE_COLOR);
+    //sampleimg = cv::imread("/home/lbr/projects/GitProjects/0707/Qt_ncnn_opencv/QT_final/sample.jpg", CV_LOAD_IMAGE_COLOR);
     //recognize.start(sampleimg, samplefea);
 
 
@@ -176,6 +178,44 @@ void MainPage::on_pushButton_pressed()
                 std::vector<float> croppedfea;
                 cv::Point org;
 
+                dlib::rectangle R(
+                                    (long)(finalBbox[0].x1),
+                                    (long)(finalBbox[0].y1),
+                                    (long)(finalBbox[0].x2),
+                                    (long)(finalBbox[0].y2)
+                );
+
+                dlib::cv_image<dlib::bgr_pixel> dimg(frame);
+//                std::vector<dlib::full_object_detection> shapes;
+                // Landmark detection on full sized image
+                dlib::full_object_detection shape = pose_model(dimg,R);
+//                shapes.push_back(shape);
+                render_face(frame, shape);
+
+                //calculate eyes
+                double left_ratio = (shape.part(39).x() - shape.part(36).x())/2.0/(shape.part(41).y() + shape.part(40).y() - shape.part(37).y() - shape.part(38).y()+0.1f);
+                double right_ratio = (shape.part(45).x() - shape.part(42).x())/2.0/(shape.part(47).y() + shape.part(46).y() - shape.part(44).y() - shape.part(43).y()+0.1f);
+                double mouth = (shape.part(66).y() + shape.part(57).y() - shape.part(62).y() - shape.part(51).y())/((float)(shape.part(54).x() - shape.part(48).x()));
+                //std::cout << "left: " << left_ratio << "right: " << right_ratio << "mouth: " << mouth << std::endl;
+
+                eye_blink.push_back(left_ratio+right_ratio-2.3);
+                if(eye_blink.size()>2)
+                    eye_blink.erase(eye_blink.begin());
+
+                if(eye_blink.front() < 0 && eye_blink.back()>0 ){
+                    num_blink++;
+                }
+
+                if(left_ratio>1&&right_ratio>1)
+                {
+                    close_eye++;
+                }
+                else
+                {
+                    close_eye = 0;
+                }
+
+
                 if(state == RECOGNIZE)
                     rectangle(frame, r, Scalar(0, 0, 255), 2, 8, 0);
 
@@ -188,50 +228,17 @@ void MainPage::on_pushButton_pressed()
                     double similar;
                     int id;
                     similar = db->findKindred(croppedfea,id);
-//                    qDebug() << "id: " << id << "similarity: " << similar;
-
-                    QString text = QStringLiteral("ID: %1 similarity: %2 ").arg(id).arg(similar);
+                    QString text;
+                    if(similar > 0.59){
+                       text = QStringLiteral("ID: %1 similarity: %2 ").arg(id).arg(similar);
+                    }
+                    else{
+                       text = QStringLiteral("       similarity: %2 ").arg(similar-0.2);
+                    }
                     putText(frame,text.toStdString(),cv::Point(finalBbox[0].x1, finalBbox[0].y1),FONT_HERSHEY_COMPLEX,1,Scalar(0,0,255),4);
                 }
 
 
-                dlib::rectangle R(  (long)(finalBbox[0].x1),
-                                    (long)(finalBbox[0].y1),
-                                    (long)(finalBbox[0].x2),
-                                    (long)(finalBbox[0].y2)
-                );
-
-                dlib::cv_image<dlib::bgr_pixel> dimg(frame);
-                std::vector<dlib::full_object_detection> shapes;
-                // Landmark detection on full sized image
-                dlib::full_object_detection shape = pose_model(dimg,R);
-                shapes.push_back(shape);
-
-                render_face(frame, shape);
-
-                //calculate eyes
-                double left_ratio = (shape.part(39).x() - shape.part(36).x())/2.0/(shape.part(41).y() + shape.part(40).y() - shape.part(37).y() - shape.part(38).y()+0.1f);
-                double right_ratio = (shape.part(45).x() - shape.part(42).x())/2.0/(shape.part(47).y() + shape.part(46).y() - shape.part(44).y() - shape.part(43).y()+0.1f);
-                double mouth = (shape.part(66).y() + shape.part(57).y() - shape.part(62).y() - shape.part(51).y())/((float)(shape.part(54).x() - shape.part(48).x()));
-                std::cout << "left: " << left_ratio << "right: " << right_ratio << "mouth: " << mouth << std::endl;
-
-                eye_blink.push_back(left_ratio+right_ratio-2.3);
-                if(eye_blink.size()>2)
-                    eye_blink.erase(eye_blink.begin());
-
-                if(eye_blink.front() < 0 && eye_blink.back()>0 ){
-                    num_blink++;
-                    //qDebug() << "num blink" << num_blink;
-                }
-
-                if(left_ratio>1&&right_ratio>1)
-                {
-                    close_eye++;
-                }
-                else
-                {
-                    close_eye = 0;
-                }
                 //chart
                 mouth_ratio.push_back(mouth);
                 left_eye.push_back(left_ratio);
@@ -248,14 +255,15 @@ void MainPage::on_pushButton_pressed()
 
                 if(state == DETECTION)
                 {
-
                     if(mouth>1.63){
                         warning->setHidden(false);
-                        count_warning = 7;
+                        ui->label_5->setText("Current VioLation:  Yawn");
+                        count_warning_mouth = 12;
                         if(SAVE){
-                            this->save_frame(ROI,save_idx,"mouth");
+                            this->save_frame(ROI,save_idx,"yawning");
                             save_idx++;
                             SAVE = 0;
+                            count__++;
                         }
                     }
                     else{
@@ -263,31 +271,47 @@ void MainPage::on_pushButton_pressed()
                     }
                     if(close_eye>10)
                     {
-                        warning->setHidden(false);
+                        warning_->setHidden(false);
+                        ui->label_5->setText("Current VioLation: Sleep");
                         if(SAVE){
-                            this->save_frame(ROI,save_idx,"eye");
+                            this->save_frame(ROI,save_idx,"closing eyes");
                             save_idx++;
                             SAVE = 0;
+                            count__++;
                         }
                         close_eye = 0;
-                        count_warning = 12;
+                        count_warning_eyes = 12;
                     }
-                    if(count_warning-->0)
+                    if(count_warning_mouth-->0)
                     {
                         warning->setHidden(false);
-                        qDebug()<<"count_warning:"<<count_warning<<"showed here.";
+                    }
+                    else if(count_warning_eyes-->0){
+                        warning_->setHidden(false);
                     }
                     else// if(count_warning<=0)
                     {
+                        warning_->setHidden(true);
                         warning->setHidden(true);
                     }
-                    qDebug()<<"count_warning:"<<count_warning;
                 }
-                if(state == RECOGNIZE && num_blink > 5){
+                if(count__ >= 7){
+                    ui->label_4->setText("Driver Condition:  bad    ");
+                }
+                else if(count__ >= 3){
+                    ui->label_4->setText("Driver Condition:  tired  ");
+                }
+                else{
+                    ui->label_4->setText("Driver Condition:  fine   ");
+                }
+                int id;
+                double similar = db->findKindred(croppedfea,id);
+                if(state == RECOGNIZE && num_blink >= 2 &&similar >= 0.62){
                     passing->setHidden(false);
+                    ui->label_3->setText("Legal Yes or No? yes  ");
                     count_passing = 12;
-                    num_blink = 0;
                     state = DETECTION;
+                    num_blink = 0;
                 }
                 else{
                     passing->setHidden(true);
@@ -298,9 +322,10 @@ void MainPage::on_pushButton_pressed()
                 else{
                     passing->setHidden(true);
                 }
-                if(count_warning < 0){
+                if(count_warning_mouth < 0 && count_warning_eyes < 0){
                     SAVE = 1;
-                    count_warning = 0;
+                    count_warning_eyes = 0;
+                    count_warning_mouth = 0;
                 }
                 noFace_count = 0;
 
@@ -308,9 +333,10 @@ void MainPage::on_pushButton_pressed()
             if(num_box==0){
                 noFace_count++;
                 qDebug() << "noFace_count: " << noFace_count;
-                if(noFace_count > 100 && state == DETECTION){
+                if(noFace_count > 50 && state == DETECTION){
                     noFace_count = 0;
                     state = RECOGNIZE;
+                    ui->label_3->setText("Legal Yes or No? no   ");
                     num_blink = 0;
                 }
             }
@@ -331,15 +357,12 @@ void MainPage::on_pushButton_pressed()
                              QImage::Format_RGB888);
             chartpixmap.setPixmap( QPixmap::fromImage(chartqimg.rgbSwapped()) );
             ui->chartview->fitInView(&chartpixmap, Qt::KeepAspectRatio);
-
-
-
-
         }
         qApp->processEvents();
     }
 
 }
+
 
 void MainPage::resizeEvent(QResizeEvent*)
 {
@@ -354,13 +377,13 @@ void MainPage::resizeEvent(QResizeEvent*)
 void MainPage::save_frame(cv::Mat roi,int save_idx,QString misbehavior)
 {
 
-    string img_path = "/home/zhang/Project/Qt_ncnn_opencv/QT_final/his_imgs/image_"+to_string(save_idx)+".jpg";
+    string img_path = "/home/lbr/projects/GitProjects/0707/Qt_ncnn_opencv/QT_final/his_imgs/image_"+to_string(save_idx)+".jpg";
     if(!(roi.empty())){
        cv::imwrite(img_path,roi);
-       qDebug()<<"save_frame() called   idx = "<<save_idx;
-       QString date="null";
+       QString date=QDateTime::currentDateTime().toString("yyyy MM dd hh mm");
        QString imgpath = QString::fromStdString(img_path);
        db->addHistory(save_idx,date,misbehavior,imgpath);
+
     }
 }
 

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1258</width>
-    <height>699</height>
+    <width>1431</width>
+    <height>765</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,7 +16,7 @@
   <property name="styleSheet">
    <string notr="true"/>
   </property>
-  <layout class="QHBoxLayout" name="horizontalLayout" stretch="3,2">
+  <layout class="QHBoxLayout" name="horizontalLayout" stretch="3,0">
    <property name="spacing">
     <number>42</number>
    </property>
@@ -51,8 +51,14 @@
          <height>65</height>
         </size>
        </property>
+       <property name="font">
+        <font>
+         <family>DejaVu Sans</family>
+         <pointsize>19</pointsize>
+        </font>
+       </property>
        <property name="text">
-        <string>打开摄像头</string>
+        <string>Open camera</string>
        </property>
        <property name="icon">
         <iconset resource="resource.qrc">
@@ -72,7 +78,7 @@
     </layout>
    </item>
    <item>
-    <layout class="QVBoxLayout" name="verticalLayout_2" stretch="3,3">
+    <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,0">
      <property name="spacing">
       <number>20</number>
      </property>
@@ -82,7 +88,7 @@
         <string notr="true"/>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_4">
-        <item alignment="Qt::AlignHCenter|Qt::AlignTop">
+        <item>
          <widget class="QLabel" name="label_2">
           <property name="text">
            <string>当前驾驶员状态</string>
@@ -112,48 +118,41 @@
              <property name="verticalSpacing">
               <number>30</number>
              </property>
-             <item row="0" column="0">
-              <widget class="QLabel" name="label_3">
-               <property name="text">
-                <string>是否为合法驾驶员:</string>
-               </property>
-              </widget>
-             </item>
              <item row="1" column="0">
               <widget class="QLabel" name="label_5">
                <property name="text">
-                <string>当前违规行为:</string>
+                <string>Current VioLation:  None</string>
                </property>
               </widget>
              </item>
              <item row="0" column="1">
               <widget class="QLabel" name="label_4">
                <property name="text">
-                <string>驾驶员疲劳程度:</string>
+                <string>Driver Condition:  fine   </string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_3">
+               <property name="text">
+                <string>Legal Yes or No?    </string>
                </property>
               </widget>
              </item>
              <item row="2" column="0">
-              <widget class="QLabel" name="label_6">
-               <property name="text">
-                <string>抽烟:</string>
+              <spacer name="verticalSpacer">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
                </property>
-              </widget>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>13</height>
+                </size>
+               </property>
+              </spacer>
              </item>
             </layout>
-           </item>
-           <item>
-            <spacer name="verticalSpacer">
-             <property name="orientation">
-              <enum>Qt::Vertical</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>20</width>
-               <height>40</height>
-              </size>
-             </property>
-            </spacer>
            </item>
           </layout>
          </widget>
@@ -174,7 +173,7 @@
          <widget class="QLabel" name="label">
           <property name="maximumSize">
            <size>
-            <width>125</width>
+            <width>300</width>
             <height>35</height>
            </size>
           </property>

@@ -14,25 +14,25 @@ FaceInput::FaceInput(QWidget *parent) :
     this->setPalette(pal);
     ui->widget->setStyleSheet("QWidget#widget{background:  transparent; border-radius: 10px; border: 1px solid gray;}");
     ui->widget_2->setStyleSheet("QWidget#widget_2{border-image: url(:/style/images/rect.png);}");
-    ui->widget_3->setStyleSheet("QWidget#widget_3{border-image: url(:/style/images/rect.png);}");
+//    ui->widget_3->setStyleSheet("QWidget#widget_3{border-image: url(:/style/images/rect.png);}");
 
     ui->graphicsView_faceinput->setScene(new QGraphicsScene(this));
     ui->graphicsView_faceinput->scene()->addItem(&pixmap);
 
     ui->label->setStyleSheet("font:18pt;");
-    ui->label_2->setStyleSheet("font:18pt;");
+//    ui->label_2->setStyleSheet("font:18pt;");
 
-    ui->horizontalSlider->setRange(0, 100);
+    //ui->horizontalSlider->setRange(0, 100);
     //警告框使用
     widget = new ModifyUserInfo(this);
     widget->setGeometry(702, 200, 514, 421);
 //    widget->show();
     widget->setHidden(true);
 
-    QString dbpath = "/home/zhang/Project/Qt_ncnn_opencv/QT_final/database/workers.db";
+    QString dbpath = "/home/lbr/projects/GitProjects/0707/Qt_ncnn_opencv/QT_final/database/workers.db";
     db = new sql(dbpath);
 
-    QString NumofWorkers = QStringLiteral("%1 人 ").arg(db->maxID());
+    QString NumofWorkers = QStringLiteral("%1  ").arg(db->maxID());
     ui->label_4->setText(NumofWorkers);
 }
 
@@ -63,7 +63,7 @@ void FaceInput::on_pushButton_pressed()
 
     Mat frame;
 
-    const char *model_path = "/home/zhang/Project/Qt_ncnn_opencv/QT_final/models";
+    const char *model_path = "/home/lbr/projects/GitProjects/0707/Qt_ncnn_opencv/QT_final/models";
     Recognize recognize(model_path);
     std::cout<<"models right";
     while(video.isOpened())
@@ -97,16 +97,15 @@ void FaceInput::on_pushButton_pressed()
                 // Copy the data into new matrix
                 ROI.copyTo(croppedImage);
 
-                recognize.start(croppedImage, croppedfea);
-
                 //add
                 if(isSample && db->isConnected){
                     isSample = false;
                     index++;
                     QString name = "test";
                     int age = 18;
+                    recognize.start(croppedImage, croppedfea);
                     db->addPerson(index,name,age,croppedfea);
-                    QString NumofWorkers = QStringLiteral("%1 人 ").arg(db->maxID());
+                    QString NumofWorkers = QStringLiteral("%1  ").arg(db->maxID());
                     ui->label_4->setText(NumofWorkers);
                 }
 
@@ -152,7 +151,7 @@ void FaceInput::on_pushButton_3_clicked()
     QSqlQuery query;
     if( !query.exec( "DELETE FROM WORKERS" ))
         qDebug() << "Error DELETE FROM WORKERS\n" << query.lastError();
-    QString NumofWorkers = QStringLiteral("%1 人 ").arg(db->maxID());
+    QString NumofWorkers = QStringLiteral("%1  ").arg(db->maxID());
     ui->label_4->setText(NumofWorkers);
 }
 
