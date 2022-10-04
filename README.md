@@ -10,6 +10,6 @@ This project is a combination of opencv(image processing), qt5, mtcnn+facenet(fa
  - line chart of the data
  
 ## Usage  
-Use Qt creater
-Download dlib face landmark model
-Alter the PATH in the source code
+Use Qt creater  
+Download dlib face landmark model  
+Alter the PATH in the source code  
